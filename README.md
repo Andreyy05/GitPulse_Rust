@@ -1,12 +1,30 @@
-# GitPulse (Rust Edition)
+# ⚡ GitPulse (Rust Edition)
 
 A lightweight, high-performance desktop utility designed for tracking daily GitHub contribution activity, monitoring commit streaks, and generating standardized commit messages.
 
-Built on **Tauri v2**, **Rust**, **React 18**, and **Tailwind CSS**.
+Built with **Tauri v2**, **Rust**, **React 18**, and **Tailwind CSS**.
+
+<div align="center">
+  <br />
+  <img src="assets/preview.png" alt="GitPulse UI Preview" width="360" style="border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.3);" />
+  <p><em>GitPulse interface showing active streak, 14-day heatmap, and Commit Fuel generator.</em></p>
+  <br />
+</div>
+
+<div align="center">
+
+[![Rust](https://img.shields.io/badge/Rust-2021_Edition-000000?logo=rust&logoColor=white)](https://www.rust-lang.org/)
+[![Tauri v2](https://img.shields.io/badge/Tauri-v2.0-24C8D8?logo=tauri&logoColor=white)](https://v2.tauri.app/)
+[![React](https://img.shields.io/badge/React-18-20232A?logo=react&logoColor=61DAFB)](https://react.dev/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3-38B2AC?logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![Platform](https://img.shields.io/badge/Platform-Windows-0078D6?logo=windows&logoColor=white)](https://www.microsoft.com/windows)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
+</div>
 
 ---
 
-## Abstract
+## 📋 Overview
 
 GitPulse provides continuous real-time observability of GitHub contribution patterns directly from the Windows desktop. Engineered as a high-efficiency alternative to traditional Chromium-based desktop frameworks, GitPulse pairs a native Rust application core with an isolated web presentation layer (WebView2), drastically minimizing runtime overhead while maintaining rich user interface capabilities.
 
@@ -14,7 +32,7 @@ The application operates unobtrusively within the system tray, provides global k
 
 ---
 
-## Technical Specifications & Benchmarks
+## ⚡ Technical Specifications & Benchmarks
 
 The following comparative evaluation highlights key resource metrics between the legacy Electron architecture and the current Tauri v2 (Rust) implementation under identical runtime conditions on Windows 11 (x86_64).
 
@@ -29,7 +47,7 @@ The following comparative evaluation highlights key resource metrics between the
 
 ---
 
-## Key Capabilities
+## 📊 Key Capabilities
 
 ### Real-Time Contribution Tracking
 * Tracks daily commit completion status against local midnight deadlines.
@@ -40,13 +58,13 @@ The following comparative evaluation highlights key resource metrics between the
 * Renders a chronological 14-day contribution density matrix matching GitHub's official activity grading scale.
 * Utilizes a native backend HTTP client (`reqwest`) to fetch user contribution profiles, eliminating Cross-Origin Resource Sharing (CORS) and Content Security Policy (CSP) constraints.
 
-### Commit Fuel Generator
+### ⛽ Commit Fuel Generator
 * Integrated commit message authoring tool providing instant generation of:
   * **Conventional Commits** adhering to standard specifications (`feat:`, `fix:`, `refactor:`, `chore:`, `perf:`, `docs:`, `test:`).
   * Context-aware informal commit messages for personal and exploratory development.
 * Single-click clipboard dispatch with immediate visual confirmation.
 
-### Native System Integration
+### 🖥️ Native System Integration
 * **System Tray Implementation:** Complete lifecycle execution from the system notification area, including context menus for manual refresh and process termination.
 * **Global Visibility Accelerator:** System-wide hotkey (`CommandOrControl + Shift + G`) enabling instantaneous window toggle from any foreground application.
 * **Single Instance Lock:** Mutex-based single instance enforcement that automatically redirects focus to the active process upon secondary execution attempts.
@@ -55,7 +73,7 @@ The following comparative evaluation highlights key resource metrics between the
 
 ---
 
-## Architectural Design
+## 🏗️ Architectural Design
 
 ```mermaid
 flowchart TD
@@ -84,7 +102,7 @@ flowchart TD
 
 ---
 
-## Technology Stack
+## 🧩 Technology Stack
 
 ### Backend Core
 * **Language:** Rust (2021 Edition)
@@ -107,7 +125,7 @@ flowchart TD
 
 ---
 
-## Keyboard Controls and Navigation
+## ⌨️ Keyboard Controls and Navigation
 
 | Action | Control Sequence |
 | :--- | :--- |
@@ -119,7 +137,7 @@ flowchart TD
 
 ---
 
-## Installation and Build Instructions
+## 🚀 Installation and Build Instructions
 
 ### Prerequisites
 
@@ -158,7 +176,7 @@ src-tauri/target/release/gitpulse.exe
 
 ---
 
-## Configuration Settings
+## ⚙️ Configuration Settings
 
 Configuration options are managed through the settings interface and persisted via local storage:
 
@@ -170,10 +188,12 @@ Configuration options are managed through the settings interface and persisted v
 
 ---
 
-## License
+## 📄 License
 
 Distributed under the MIT License. See [LICENSE](LICENSE) for full legal text.
 
 ---
 
-**Author:** Andrej Pavliščak ([@Andreyy05](https://github.com/Andreyy05))
+<div align="center">
+  Author: <b>Andrej Pavliščak</b> (<a href="https://github.com/Andreyy05">@Andreyy05</a>)
+</div>
