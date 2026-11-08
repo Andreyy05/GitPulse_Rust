@@ -1,0 +1,555 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { X, Check, User, Bell, Clock, ShieldCheck, Send, MessageSquare, Rocket, Moon, Sun, Monitor, SunMedium, Eye, EyeOff } from 'lucide-react';
+import { sendDesktopNotification, sendDiscordWebhook } from '../services/notifications';
+import { enable as enableAutostart, disable as disableAutostart, isEnabled as isAutostartEnabled } from '@tauri-apps/plugin-autostart';
+
+export function SettingsModal({
+  isOpen,
+  onClose,
+  currentUsername,
+  currentPat,
+  currentGithubToken,
+  currentInterval,
+  currentEveningAlert,
+  currentAlertTime,
+  currentDiscordWebhook,
+  currentLaunchAtStartup,
+  currentTheme,
+  onSave,
+}) {
+  const [username, setUsername] = useState(currentUsername);
+  const [pat, setPat] = useState(currentPat || currentGithubToken || '');
+  const [showPat, setShowPat] = useState(false);
+  const [interval, setInterval] = useState(currentInterval);
+  const [eveningAlert, setEveningAlert] = useState(currentEveningAlert);
+  const [alertTime, setAlertTime] = useState(currentAlertTime || '18:00');
+  const [hours, setHours] = useState(() => (currentAlertTime || '18:00').split(':')[0] || '18');
+  const [minutes, setMinutes] = useState(() => (currentAlertTime || '18:00').split(':')[1] || '00');
+  const hourInputRef = useRef(null);
+  const minuteInputRef = useRef(null);
+  const [discordWebhook, setDiscordWebhook] = useState(currentDiscordWebhook || '');
+  const [theme, setTheme] = useState(currentTheme || 'dark');
+  const [launchAtStartup, setLaunchAtStartup] = useState(() => {
+    if (typeof currentLaunchAtStartup === 'boolean') return currentLaunchAtStartup;
+    return localStorage.getItem('gitpulse_launch_at_startup') === 'true';
+  });
+  const [savedSuccess, setSavedSuccess] = useState(false);
+  const [testStatus, setTestStatus] = useState(null);
+
+  const updateAlertTime = (h, m) => {
+    const safeH = String(h || '00').padStart(2, '0');
+    const safeM = String(m || '00').padStart(2, '0');
+    setAlertTime(`${safeH}:${safeM}`);
+  };
+
+  const handleHourChange = (e) => {
+    let val = e.target.value.replace(/\D/g, '');
+    if (val.length > 2) val = val.slice(-2);
+
+    if (val === '') {
+      setHours('');
+      return;
+    }
+
+    let num = parseInt(val, 10);
+    if (num > 23) {
+      val = '23';
+    }
+
+    setHours(val);
+    if (val.length === 2) {
+      updateAlertTime(val, minutes || '00');
+      minuteInputRef.current?.focus();
+      minuteInputRef.current?.select();
+    } else {
+      updateAlertTime(val.padStart(2, '0'), minutes || '00');
+    }
+  };
+
+  const handleHourBlur = () => {
+    let h = hours;
+    if (!h || isNaN(parseInt(h, 10))) {
+      h = '18';
+    } else {
+      let num = Math.min(23, Math.max(0, parseInt(h, 10)));
+      h = String(num).padStart(2, '0');
+    }
+    setHours(h);
+    updateAlertTime(h, minutes || '00');
+  };
+
+  const handleHourKeyDown = (e) => {
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      const curr = parseInt(hours || '0', 10);
+      const next = (curr + 1) % 24;
+      const nextStr = String(next).padStart(2, '0');
+      setHours(nextStr);
+      updateAlertTime(nextStr, minutes || '00');
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      const curr = parseInt(hours || '0', 10);
+      const next = (curr - 1 + 24) % 24;
+      const nextStr = String(next).padStart(2, '0');
+      setHours(nextStr);
+      updateAlertTime(nextStr, minutes || '00');
+    } else if (e.key === ':' || e.key === 'Enter') {
+      e.preventDefault();
+      minuteInputRef.current?.focus();
+      minuteInputRef.current?.select();
+    } else if (e.key === 'ArrowRight' && e.target.selectionStart === e.target.value.length) {
+      minuteInputRef.current?.focus();
+      minuteInputRef.current?.select();
+    }
+  };
+
+  const handleMinuteChange = (e) => {
+    let val = e.target.value.replace(/\D/g, '');
+    if (val.length > 2) val = val.slice(-2);
+
+    if (val === '') {
+      setMinutes('');
+      return;
+    }
+
+    let num = parseInt(val, 10);
+    if (num > 59) {
+      val = '59';
+    }
+
+    setMinutes(val);
+    updateAlertTime(hours || '18', val.padStart(2, '0'));
+  };
+
+  const handleMinuteBlur = () => {
+    let m = minutes;
+    if (!m || isNaN(parseInt(m, 10))) {
+      m = '00';
+    } else {
+      let num = Math.min(59, Math.max(0, parseInt(m, 10)));
+      m = String(num).padStart(2, '0');
+    }
+    setMinutes(m);
+    updateAlertTime(hours || '18', m);
+  };
+
+  const handleMinuteKeyDown = (e) => {
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      const curr = parseInt(minutes || '0', 10);
+      const next = (curr + 1) % 60;
+      const nextStr = String(next).padStart(2, '0');
+      setMinutes(nextStr);
+      updateAlertTime(hours || '18', nextStr);
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      const curr = parseInt(minutes || '0', 10);
+      const next = (curr - 1 + 60) % 60;
+      const nextStr = String(next).padStart(2, '0');
+      setMinutes(nextStr);
+      updateAlertTime(hours || '18', nextStr);
+    } else if (e.key === 'Backspace' && (minutes === '' || e.target.selectionStart === 0)) {
+      hourInputRef.current?.focus();
+      hourInputRef.current?.select();
+    } else if (e.key === 'ArrowLeft' && e.target.selectionStart === 0) {
+      hourInputRef.current?.focus();
+      hourInputRef.current?.select();
+    }
+  };
+
+  // Sync props when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setTheme(currentTheme || 'dark');
+      setPat(currentPat || currentGithubToken || localStorage.getItem('gitpulse_pat') || localStorage.getItem('gitpulse_github_token') || '');
+      const initialAlert = currentAlertTime || '18:00';
+      setAlertTime(initialAlert);
+      const [h, m] = initialAlert.split(':');
+      setHours((h || '18').padStart(2, '0'));
+      setMinutes((m || '00').padStart(2, '0'));
+    }
+  }, [isOpen, currentTheme, currentPat, currentGithubToken, currentAlertTime]);
+
+  // Sync startup state from Tauri Autostart plugin when modal opens
+  useEffect(() => {
+    if (!isOpen) return;
+    let isMounted = true;
+    isAutostartEnabled()
+      .then((openAtLogin) => {
+        if (isMounted && typeof openAtLogin === 'boolean') {
+          setLaunchAtStartup(openAtLogin);
+        }
+      })
+      .catch((err) => console.warn('Could not read autostart settings:', err));
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isOpen]);
+
+  if (!isOpen) return null;
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!username.trim()) return;
+
+    // Apply startup setting to Tauri autostart plugin and localStorage
+    if (typeof launchAtStartup === 'boolean') {
+      if (launchAtStartup) {
+        enableAutostart().catch(console.warn);
+      } else {
+        disableAutostart().catch(console.warn);
+      }
+    }
+    localStorage.setItem('gitpulse_launch_at_startup', String(launchAtStartup));
+    localStorage.setItem('gitpulse_pat', pat.trim());
+
+    onSave({
+      username: username.trim(),
+      pat: pat.trim(),
+      githubToken: pat.trim(),
+      refreshInterval: Number(interval),
+      eveningAlert,
+      alertTime,
+      discordWebhook: discordWebhook.trim(),
+      launchAtStartup,
+      theme,
+    });
+
+    setSavedSuccess(true);
+    setTimeout(() => {
+      setSavedSuccess(false);
+      onClose();
+    }, 700);
+  };
+
+  const handleTestNotification = async () => {
+    setTestStatus('testing');
+    try {
+      await sendDesktopNotification(
+        '🔔 GitPulse Notification Test',
+        `Test alert at ${alertTime}! Streak monitoring is active for @${username.trim() || 'user'}.`
+      );
+
+      if (discordWebhook && discordWebhook.trim()) {
+        await sendDiscordWebhook(discordWebhook, {
+          username: username.trim() || 'user',
+          commitsToday: 0,
+          customMessage: `🔔 **GitPulse Test Alert**: Daily notification scheduled for **${alertTime}**. Desktop and Discord connections are active!`,
+        });
+      }
+
+      setTestStatus('success');
+      setTimeout(() => setTestStatus(null), 2500);
+    } catch (err) {
+      console.error(err);
+      setTestStatus('error: ' + (err.message || 'Failed'));
+      setTimeout(() => setTestStatus(null), 3000);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/40 dark:bg-black/60 backdrop-blur-md flex items-center justify-center p-3">
+      <div className="w-full max-w-[370px] max-h-[90vh] bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-white/[0.08] rounded-xl shadow-2xl p-4 flex flex-col space-y-3.5 overflow-hidden text-zinc-900 dark:text-zinc-100">
+        {/* Modal Header */}
+        <div className="flex items-center justify-between border-b border-zinc-200/80 dark:border-white/[0.06] pb-2.5">
+          <div className="flex items-center space-x-2">
+            <User size={15} className="text-zinc-500 dark:text-zinc-400" />
+            <h3 className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 tracking-tight">Settings</h3>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-1 rounded-md text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-white/[0.06] transition-colors"
+          >
+            <X size={14} />
+          </button>
+        </div>
+
+        {/* Scrollable Settings Form */}
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto space-y-3.5 text-xs pr-1 custom-scrollbar">
+          {/* Appearance / Theme Segmented Control */}
+          <div className="flex flex-col space-y-1.5">
+            <label className="text-zinc-700 dark:text-zinc-300 font-medium tracking-tight flex items-center space-x-1">
+              <SunMedium size={12} className="text-zinc-500 dark:text-zinc-400" />
+              <span>Appearance</span>
+            </label>
+            <div className="grid grid-cols-3 p-1 rounded-lg bg-zinc-100 dark:bg-white/[0.04] border border-zinc-200/80 dark:border-white/[0.06]">
+              {[
+                { id: 'dark', label: 'Dark', icon: Moon },
+                { id: 'light', label: 'Light', icon: Sun },
+                { id: 'system', label: 'System', icon: Monitor },
+              ].map((opt) => {
+                const Icon = opt.icon;
+                const isActive = theme === opt.id;
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => setTheme(opt.id)}
+                    className={`py-1.5 rounded-md text-xs font-medium tracking-tight flex items-center justify-center space-x-1.5 transition-all ${
+                      isActive
+                        ? 'bg-white text-zinc-900 shadow-xs dark:bg-white/10 dark:text-white dark:shadow-none'
+                        : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200'
+                    }`}
+                  >
+                    <Icon size={12} />
+                    <span>{opt.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* GitHub Username Input */}
+          <div className="flex flex-col space-y-1">
+            <label className="text-zinc-700 dark:text-zinc-300 font-medium tracking-tight">GitHub Username</label>
+            <div className="relative">
+              <span className="absolute left-3 top-2 text-zinc-400 dark:text-zinc-500 font-mono text-xs">@</span>
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder="e.g. Andreyy05"
+                className="w-full bg-zinc-50 dark:bg-white/[0.03] border border-zinc-200/90 dark:border-white/[0.08] rounded-lg pl-7 pr-3 py-1.5 text-zinc-900 dark:text-zinc-100 text-xs focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-500 focus:ring-1 focus:ring-zinc-400 dark:focus:ring-zinc-500 transition-all font-mono placeholder:text-zinc-400 dark:placeholder:text-zinc-600"
+                required
+              />
+            </div>
+            <span className="text-[10px] text-zinc-500 dark:text-zinc-400">
+              Monitors public activity events from GitHub API.
+            </span>
+          </div>
+
+          {/* GitHub Personal Access Token (PAT) */}
+          <div className="flex flex-col space-y-1">
+            <label className="text-zinc-700 dark:text-zinc-300 font-medium tracking-tight flex items-center space-x-1">
+              <ShieldCheck size={12} className="text-zinc-500 dark:text-zinc-400" />
+              <span>GitHub Personal Access Token</span>
+            </label>
+            <div className="relative">
+              <input
+                type={showPat ? 'text' : 'password'}
+                value={pat}
+                onChange={(e) => setPat(e.target.value)}
+                placeholder="ghp_..."
+                className="w-full bg-zinc-50 dark:bg-white/[0.03] border border-zinc-200/90 dark:border-white/[0.08] rounded-lg pl-3 pr-8 py-1.5 text-zinc-900 dark:text-zinc-100 text-xs focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-500 focus:ring-1 focus:ring-zinc-400 dark:focus:ring-zinc-500 transition-all font-mono placeholder:text-zinc-400 dark:placeholder:text-zinc-600"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPat(!showPat)}
+                className="absolute right-2.5 top-2 text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 transition-colors"
+                title={showPat ? 'Hide token' : 'Show token'}
+              >
+                {showPat ? <EyeOff size={13} /> : <Eye size={13} />}
+              </button>
+            </div>
+            <span className="text-[10px] text-zinc-500 dark:text-zinc-400">
+              Increases GitHub API rate limit to 5,000 requests/hour.
+            </span>
+          </div>
+
+          {/* Auto Refresh Interval */}
+          <div className="flex flex-col space-y-1">
+            <label className="text-zinc-700 dark:text-zinc-300 font-medium tracking-tight flex items-center space-x-1">
+              <Clock size={12} className="text-zinc-500 dark:text-zinc-400" />
+              <span>Background Refresh Rate</span>
+            </label>
+            <select
+              value={interval}
+              onChange={(e) => setInterval(Number(e.target.value))}
+              className="w-full bg-zinc-50 dark:bg-white/[0.03] border border-zinc-200/90 dark:border-white/[0.08] rounded-lg px-3 py-1.5 text-zinc-900 dark:text-zinc-200 text-xs focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-500 transition-all cursor-pointer"
+            >
+              <option value={5} className="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-200">Every 5 minutes</option>
+              <option value={15} className="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-200">Every 15 minutes (recommended)</option>
+              <option value={30} className="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-200">Every 30 minutes</option>
+              <option value={60} className="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-200">Every 60 minutes</option>
+            </select>
+          </div>
+
+          {/* Launch at Startup Switch */}
+          <div className="pt-2 border-t border-zinc-200/80 dark:border-white/[0.06] flex items-center justify-between">
+            <div className="flex flex-col pr-2">
+              <span className="text-zinc-800 dark:text-zinc-200 font-medium tracking-tight flex items-center space-x-1.5">
+                <Rocket size={12} className="text-zinc-500 dark:text-zinc-400" />
+                <span>Launch at Startup</span>
+              </span>
+              <span className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-0.5">
+                Automatically start GitPulse when logging into Windows.
+              </span>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={launchAtStartup}
+              onClick={() => {
+                const nextState = !launchAtStartup;
+                setLaunchAtStartup(nextState);
+              }}
+              className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                launchAtStartup ? 'bg-emerald-500' : 'bg-zinc-300 dark:bg-white/10'
+              }`}
+            >
+              <span
+                className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition duration-200 ease-in-out ${
+                  launchAtStartup ? 'translate-x-4' : 'translate-x-0'
+                }`}
+              />
+            </button>
+          </div>
+
+          {/* Daily Streak Reminder & Custom Alert Time */}
+          <div className="pt-2 border-t border-zinc-200/80 dark:border-white/[0.06] space-y-2">
+            <label className="flex items-start space-x-2.5 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={eveningAlert}
+                onChange={(e) => setEveningAlert(e.target.checked)}
+                className="mt-0.5 rounded border-zinc-300 dark:border-zinc-700 bg-white dark:bg-white/[0.04] text-emerald-600 dark:text-emerald-500 focus:ring-0 cursor-pointer"
+              />
+              <div className="flex flex-col">
+                <span className="text-zinc-800 dark:text-zinc-200 font-medium tracking-tight flex items-center space-x-1">
+                  <Bell size={11} className="text-zinc-500 dark:text-zinc-400" />
+                  <span>Daily Streak Reminder</span>
+                </span>
+                <span className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-0.5">
+                  Sends alert if you haven't pushed commits before the scheduled time.
+                </span>
+              </div>
+            </label>
+
+            {eveningAlert && (
+              <div className="pl-6 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-zinc-600 dark:text-zinc-400 text-xs font-medium">Reminder Time:</span>
+                  <div className="flex items-center space-x-1.5">
+                    <input
+                      ref={hourInputRef}
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      maxLength={2}
+                      value={hours}
+                      onChange={handleHourChange}
+                      onBlur={handleHourBlur}
+                      onKeyDown={handleHourKeyDown}
+                      onFocus={(e) => e.target.select()}
+                      placeholder="18"
+                      className="w-10 bg-zinc-100 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700/80 text-zinc-900 dark:text-zinc-100 rounded-lg text-center font-mono py-1 px-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500/50 focus:border-emerald-500 transition-colors"
+                      aria-label="Hours"
+                    />
+                    <span className="text-zinc-400 dark:text-zinc-500 font-mono font-bold text-xs select-none">:</span>
+                    <input
+                      ref={minuteInputRef}
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      maxLength={2}
+                      value={minutes}
+                      onChange={handleMinuteChange}
+                      onBlur={handleMinuteBlur}
+                      onKeyDown={handleMinuteKeyDown}
+                      onFocus={(e) => e.target.select()}
+                      placeholder="00"
+                      className="w-10 bg-zinc-100 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700/80 text-zinc-900 dark:text-zinc-100 rounded-lg text-center font-mono py-1 px-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500/50 focus:border-emerald-500 transition-colors"
+                      aria-label="Minutes"
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center space-x-1.5">
+                  {['17:00', '18:00', '20:00', '21:30'].map((preset) => {
+                    const isActive = alertTime === preset;
+                    return (
+                      <button
+                        key={preset}
+                        type="button"
+                        onClick={() => {
+                          setAlertTime(preset);
+                          const [h, m] = preset.split(':');
+                          setHours(h);
+                          setMinutes(m);
+                        }}
+                        className={`text-[10px] font-mono px-2 py-0.5 rounded-md border transition-colors ${
+                          isActive
+                            ? 'bg-zinc-800 border-zinc-500 text-white font-medium shadow-xs'
+                            : 'bg-zinc-100 border-zinc-200/80 text-zinc-600 hover:text-zinc-900 dark:bg-white/[0.02] dark:border-white/[0.06] dark:text-zinc-400 dark:hover:text-zinc-200'
+                        }`}
+                      >
+                        {preset}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Optional Discord Webhook Alert */}
+          <div className="pt-2 border-t border-zinc-200/80 dark:border-white/[0.06] space-y-1.5">
+            <label className="text-zinc-700 dark:text-zinc-300 font-medium tracking-tight flex items-center space-x-1">
+              <MessageSquare size={12} className="text-zinc-500 dark:text-zinc-400" />
+              <span>Discord Notification (Optional)</span>
+            </label>
+            <input
+              type="url"
+              value={discordWebhook}
+              onChange={(e) => setDiscordWebhook(e.target.value)}
+              placeholder="https://discord.com/api/webhooks/..."
+              className="w-full bg-zinc-50 dark:bg-white/[0.03] border border-zinc-200/90 dark:border-white/[0.08] rounded-lg px-3 py-1.5 text-zinc-900 dark:text-zinc-200 text-xs focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-500 transition-all font-mono placeholder:text-zinc-400 dark:placeholder:text-zinc-600"
+            />
+            <span className="text-[10px] text-zinc-500 dark:text-zinc-400 block">
+              Paste a Discord channel webhook to also receive streak alerts directly in Discord.
+            </span>
+          </div>
+
+          {/* Test Alert Button */}
+          <div className="pt-1.5">
+            <button
+              type="button"
+              onClick={handleTestNotification}
+              disabled={testStatus === 'testing'}
+              className="w-full py-1.5 rounded-lg border border-zinc-200/90 dark:border-white/[0.08] bg-zinc-50 dark:bg-white/[0.03] hover:bg-zinc-100 dark:hover:bg-white/[0.06] text-zinc-700 dark:text-zinc-300 text-xs font-medium flex items-center justify-center space-x-1.5 transition-colors"
+            >
+              <Send size={11} className={testStatus === 'testing' ? 'animate-pulse text-zinc-600 dark:text-zinc-300' : 'text-zinc-500 dark:text-zinc-400'} />
+              <span>
+                {testStatus === 'testing'
+                  ? 'Sending test alert...'
+                  : testStatus === 'success'
+                  ? 'Alert Sent'
+                  : testStatus
+                  ? `Failed: ${testStatus}`
+                  : 'Send Test Notification'}
+              </span>
+            </button>
+          </div>
+
+          {/* Modal Action Buttons */}
+          <div className="pt-2.5 border-t border-zinc-200/80 dark:border-white/[0.06] flex items-center justify-end space-x-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-3 py-1.5 rounded-lg border border-zinc-200/80 dark:border-white/[0.08] text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-white/[0.04] transition-colors text-xs font-medium"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-3.5 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 text-white dark:bg-white dark:text-zinc-950 dark:hover:bg-zinc-200 font-medium text-xs flex items-center space-x-1.5 transition-colors shadow-sm"
+            >
+              {savedSuccess ? (
+                <>
+                  <Check size={12} />
+                  <span>Saved</span>
+                </>
+              ) : (
+                <>
+                  <ShieldCheck size={12} />
+                  <span>Save Settings</span>
+                </>
+              )}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
