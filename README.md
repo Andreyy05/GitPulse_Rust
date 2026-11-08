@@ -1,183 +1,179 @@
-# ⚡ GitPulse (Rust Edition)
+# GitPulse (Rust Edition)
 
-<div align="center">
+A lightweight, high-performance desktop utility designed for tracking daily GitHub contribution activity, monitoring commit streaks, and generating standardized commit messages.
 
-  <img src="assets/icon.png" alt="GitPulse Logo" width="128" height="128" />
-
-  <h3>Ultra-lightweight, high-performance desktop tracker for GitHub commit streaks & commit fuel.</h3>
-
-  <p>
-    Built with <b>Tauri v2</b>, <b>Rust</b>, <b>React 18</b>, and <b>Tailwind CSS</b>.
-  </p>
-
-  <p>
-    <img src="https://img.shields.io/badge/Rust-000000?style=for-the-badge&logo=rust&logoColor=white" alt="Rust" />
-    <img src="https://img.shields.io/badge/Tauri_v2-24C8D8?style=for-the-badge&logo=tauri&logoColor=white" alt="Tauri" />
-    <img src="https://img.shields.io/badge/React_18-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React" />
-    <img src="https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="Tailwind" />
-    <img src="https://img.shields.io/badge/Platform-Windows-0078D6?style=for-the-badge&logo=windows&logoColor=white" alt="Windows" />
-    <img src="https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge" alt="License" />
-  </p>
-
-</div>
+Built on **Tauri v2**, **Rust**, **React 18**, and **Tailwind CSS**.
 
 ---
 
-## 📖 Overview
+## Abstract
 
-**GitPulse Rust Edition** is a ground-up rewrite of the GitPulse developer widget, ported from Electron to **Tauri v2** and **Rust**. 
+GitPulse provides continuous real-time observability of GitHub contribution patterns directly from the Windows desktop. Engineered as a high-efficiency alternative to traditional Chromium-based desktop frameworks, GitPulse pairs a native Rust application core with an isolated web presentation layer (WebView2), drastically minimizing runtime overhead while maintaining rich user interface capabilities.
 
-Designed for developers who care about productivity, speed, and keeping their daily GitHub commit streak alive without sacrificing system resources. GitPulse sits quietly in your Windows system tray, tracks your commits in real-time, reminds you before midnight strikes, generates instant commit messages, and pops up globally with a single keystroke.
+The application operates unobtrusively within the system tray, provides global keyboard shortcut accessibility, persists local state, and interfaces directly with GitHub endpoints via native HTTP bindings to prevent client-side cross-origin limitations.
 
 ---
 
-## ⚡ Performance: Electron vs Tauri v2 (Rust)
+## Technical Specifications & Benchmarks
 
-| Metric | 🐢 Electron Version | 🚀 GitPulse Rust (Tauri v2) | Improvement |
+The following comparative evaluation highlights key resource metrics between the legacy Electron architecture and the current Tauri v2 (Rust) implementation under identical runtime conditions on Windows 11 (x86_64).
+
+| Metric | Legacy Architecture (Electron) | Current Architecture (Tauri v2 / Rust) | Delta |
 | :--- | :--- | :--- | :--- |
-| **Idle Memory (RAM)** | ~180 MB – 260 MB | **~30 MB – 45 MB** | **~80% reduction** |
-| **Cold Startup Time** | ~2.5 – 3.5 seconds | **< 250 milliseconds** | **10x faster** |
-| **Binary Architecture** | Full Chromium + Node runtime | **Native Rust + Win32 WebView2** | Modern & Native |
-| **Asset Delivery** | Local Node filesystem server | **Embedded into executable (`custom-protocol`)** | Zero port conflicts |
-| **Background Overhead** | High (multiple helper processes) | **Minimal (1 lightweight process)** | Negligible CPU impact |
+| **Runtime Engine** | Bundled Chromium + Node.js | Native Win32 WebView2 + Rust | Eliminates bundled browser runtime |
+| **Idle Memory Consumption (RSS)** | ~180 MB – 260 MB | **~30 MB – 45 MB** | **~80% memory reduction** |
+| **Cold Startup Latency** | ~2,500 – 3,500 ms | **< 250 ms** | **10x faster execution** |
+| **Process Count** | 4 – 5 concurrent processes | **1 parent process + WebView workers** | Streamlined process hierarchy |
+| **Asset Delivery Model** | Node.js internal HTTP/file server | **Embedded within executable (`custom-protocol`)** | Zero open network ports required |
+| **Binary Portability** | Directory structure / unpacked runtime | **Standalone single PE executable** | Self-contained deployment |
 
 ---
 
-## ✨ Features
+## Key Capabilities
 
-- **🔥 Real-time Streak Tracking:** Monitor your current daily commit streak, streak records, and today's commit status.
-- **⏳ Midnight Countdown Timer:** Live countdown to local midnight so you never lose your streak.
-- **🟩 14-Day Activity Heatmap:** Native calendar activity grid with real-time commit density visualization.
-- **⛽ Commit Fuel:** Instant commit message generator supporting:
-  - *Conventional Commits* (`feat:`, `fix:`, `refactor:`, `chore:`, etc.)
-  - *Witty / Fun Commits* for casual open-source work.
-  - 1-click copy to clipboard with instant visual feedback.
-- **🪟 Frameless Glassmorphic UI:** Smooth, borderless floating window with custom drag regions, dark/light theme switching, and responsive design.
-- **📥 System Tray Integration:**
-  - Minimizes cleanly to the Windows notification tray.
-  - Left-click to instantly toggle visibility.
-  - Tray context menu with quick status refresh and quit options.
-  - Dynamic tray tooltip reflecting your current streak count.
-- **⌨️ Global Keystroke Toggle (`Ctrl + Shift + G`):** Summon or hide GitPulse from anywhere in Windows with zero lag.
-- **🔒 Single Instance Lock:** Automatically restores and focuses the active window if you try to open a second instance.
-- **🔔 Multi-Channel Notifications:**
-  - Native Windows desktop alerts.
-  - Discord Webhook integration for team and personal Discord channels.
-- **🚀 Windows Autostart:** Seamless option to launch minimized at Windows login.
-- **🎉 Streak Celebrations:** Confetti animations upon logging your first commit of the day.
+### Real-Time Contribution Tracking
+* Tracks daily commit completion status against local midnight deadlines.
+* Displays dynamic countdown timer to streak expiration in the active system timezone.
+* Calculates active streak lengths and historically observed streak records.
+
+### 14-Day Activity Heatmap
+* Renders a chronological 14-day contribution density matrix matching GitHub's official activity grading scale.
+* Utilizes a native backend HTTP client (`reqwest`) to fetch user contribution profiles, eliminating Cross-Origin Resource Sharing (CORS) and Content Security Policy (CSP) constraints.
+
+### Commit Fuel Generator
+* Integrated commit message authoring tool providing instant generation of:
+  * **Conventional Commits** adhering to standard specifications (`feat:`, `fix:`, `refactor:`, `chore:`, `perf:`, `docs:`, `test:`).
+  * Context-aware informal commit messages for personal and exploratory development.
+* Single-click clipboard dispatch with immediate visual confirmation.
+
+### Native System Integration
+* **System Tray Implementation:** Complete lifecycle execution from the system notification area, including context menus for manual refresh and process termination.
+* **Global Visibility Accelerator:** System-wide hotkey (`CommandOrControl + Shift + G`) enabling instantaneous window toggle from any foreground application.
+* **Single Instance Lock:** Mutex-based single instance enforcement that automatically redirects focus to the active process upon secondary execution attempts.
+* **Desktop & Webhook Notifications:** Native Windows notifications coupled with configurable external Discord webhook dispatches for scheduled status updates.
+* **Autostart Facility:** Built-in capability to register as a Windows startup application.
 
 ---
 
-## 🏗️ Architecture
+## Architectural Design
 
 ```mermaid
 flowchart TD
-    subgraph UI ["Frontend (Vite + React 18 + Tailwind CSS)"]
-        A[Header: Window Controls & Drag Region]
-        B[StatusCard: Streak & 14-Day Heatmap]
-        C[CommitFuel: Commit Generator]
-        D[SettingsModal: GitHub PAT, Interval, Discord Webhook]
+    subgraph Frontend ["Presentation Layer (Vite + React 18 + Tailwind CSS)"]
+        H[Header: Frameless Controls & Drag Regions]
+        SC[StatusCard: Streak & Activity Heatmap]
+        CF[CommitFuel: Message Generation Engine]
+        SM[SettingsModal: Credentials & Network Options]
     end
 
-    subgraph IPC ["Tauri v2 IPC Bridge"]
-        E[Tauri Commands & Events]
+    subgraph IPC ["Tauri v2 Inter-Process Communication (IPC)"]
+        Bridge[Type-Safe Invocation Handlers & Event Bus]
     end
 
-    subgraph Rust ["Native Rust Backend (src-tauri)"]
-        F[Native System Tray with Context Menu]
-        G[Global Shortcut Listener: Ctrl+Shift+G]
-        H[Single Instance Mutex]
-        I[Native GitHub HTTP Scraper with reqwest]
-        J[Windows Autostart Plugin]
-        K[Desktop Notifications Plugin]
+    subgraph Backend ["Core Layer (Rust 2021 / Tauri v2)"]
+        Tray[System Tray Service]
+        Shortcut[Global Shortcut Manager]
+        Lock[Single Instance Lock]
+        HTTP[Native HTTP Scraper Client]
+        Notif[Windows Toast & Discord Webhook Service]
+        Auto[Autostart Manager]
     end
 
-    UI <--> IPC <--> Rust
+    Frontend <--> Bridge <--> Backend
 ```
 
 ---
 
-## 🛠️ Tech Stack
+## Technology Stack
 
-- **Backend:** [Rust](https://www.rust-lang.org/) (2021 Edition), [Tauri v2](https://v2.tauri.app/)
-- **Frontend:** [React 18](https://react.dev/), [Vite](https://vitejs.dev/), [Tailwind CSS](https://tailwindcss.com/)
-- **Icons & Effects:** [Lucide React](https://lucide.dev/), [canvas-confetti](https://www.npmjs.com/package/canvas-confetti)
-- **Native Plugins:**
-  - `@tauri-apps/plugin-global-shortcut`
-  - `@tauri-apps/plugin-single-instance`
-  - `@tauri-apps/plugin-autostart`
-  - `@tauri-apps/plugin-notification`
-  - `@tauri-apps/plugin-opener`
-  - `reqwest` (Rust HTTP client)
+### Backend Core
+* **Language:** Rust (2021 Edition)
+* **Application Framework:** Tauri v2
+* **HTTP Client:** `reqwest` v0.12 (Native TLS / JSON deserialization)
+* **Serialization:** `serde`, `serde_json`
+* **Plugins:**
+  * `tauri-plugin-single-instance`
+  * `tauri-plugin-global-shortcut`
+  * `tauri-plugin-autostart`
+  * `tauri-plugin-notification`
+  * `tauri-plugin-opener`
+
+### Presentation Layer
+* **UI Framework:** React 18
+* **Build Tooling:** Vite 6
+* **Styling System:** Tailwind CSS 3
+* **Iconography:** Lucide React
+* **Visual Effects:** Canvas Confetti
 
 ---
 
-## ⌨️ Shortcuts & Controls
+## Keyboard Controls and Navigation
 
-| Action | Shortcut / Gesture |
+| Action | Control Sequence |
 | :--- | :--- |
 | **Toggle Window Visibility** | `Ctrl + Shift + G` (Global) |
-| **Move Window** | Click and drag the top header bar |
-| **Hide to Tray** | Click the close button `✕` or `Ctrl + Shift + G` |
-| **Show from Tray** | Left-click the tray icon or right-click `Open GitPulse` |
-| **Force Refresh Activity** | Right-click tray icon -> `Refresh Activity Now` |
+| **Reposition Window** | Click and drag along the top navigation bar |
+| **Minimize to Tray** | Close button (`✕`) or `Ctrl + Shift + G` |
+| **Restore from Tray** | Left-click tray icon or Context Menu -> `Open GitPulse` |
+| **Manual Refresh** | Context Menu -> `Refresh Activity Now` |
 
 ---
 
-## 🚀 Getting Started
+## Installation and Build Instructions
 
 ### Prerequisites
 
-1. **Node.js** (v18+ recommended): [Download Node.js](https://nodejs.org/)
-2. **Rust & Cargo**: [Install Rustup](https://rustup.rs/)
-   - On Windows, install the `stable-x86_64-pc-windows-gnu` or MSVC toolchain.
+* **Node.js:** v18.0.0 or higher
+* **npm:** v9.0.0 or higher
+* **Rust Toolchain:** `stable-x86_64-pc-windows-gnu` or `stable-x86_64-pc-windows-msvc` (Rust 1.78+)
+* **WebView2 Runtime:** Installed by default on Windows 10 (1803+) and Windows 11
 
-### Installation & Setup
+### Setup
 
-1. **Clone the repository:**
+1. Clone repository:
    ```bash
    git clone https://github.com/Andreyy05/GitPulse_Rust.git
    cd GitPulse_Rust
    ```
 
-2. **Install frontend dependencies:**
+2. Install presentation dependencies:
    ```bash
    npm install
    ```
 
-3. **Run in development mode:**
+3. Launch in development mode:
    ```bash
    npm run dev
    ```
 
-4. **Build standalone production executable:**
+4. Build standalone production binary:
    ```bash
    npm run build:release
    ```
-   The compiled, optimized executable will be located at:
-   ```
-   src-tauri/target/release/gitpulse.exe
-   ```
+
+The compiled, release-optimized executable will be output to:
+```
+src-tauri/target/release/gitpulse.exe
+```
 
 ---
 
-## ⚙️ Configuration
+## Configuration Settings
 
-In the in-app **Settings** modal (gear icon in the top header):
-- **GitHub Username:** Enter your username to track public contributions.
-- **Personal Access Token (PAT):** (Optional) Add a classic or fine-grained GitHub token to track private repository contributions and increase API rate limits.
-- **Refresh Interval:** Set how often GitPulse checks for new commits (15, 30, or 60 minutes).
-- **Discord Webhook:** Paste your Discord channel webhook URL for streak milestone notifications.
-- **Launch at Startup:** Enable to start GitPulse automatically in the background when logging into Windows.
+Configuration options are managed through the settings interface and persisted via local storage:
 
----
-
-## 📄 License
-
-This project is open-source and available under the [MIT License](LICENSE).
+* **GitHub Username:** Target GitHub account handle for activity aggregation.
+* **Personal Access Token (PAT):** Optional GitHub token supporting `read:user` and `repo` scopes for private contribution tracking and enhanced API rate quotas.
+* **Polling Interval:** Automated background sync cadence (15, 30, or 60 minutes).
+* **Discord Webhook URL:** Webhook endpoint for automated status delivery to Discord servers.
+* **Launch on Startup:** Toggles system startup persistence.
 
 ---
 
-<div align="center">
-  Made with ❤️ and 🦀 by <a href="https://github.com/Andreyy05"><b>Andrej Pavliščak</b></a>
-</div>
+## License
+
+Distributed under the MIT License. See [LICENSE](LICENSE) for full legal text.
+
+---
+
+**Author:** Andrej Pavliščak ([@Andreyy05](https://github.com/Andreyy05))
