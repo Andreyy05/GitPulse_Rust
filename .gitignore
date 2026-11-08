@@ -7,6 +7,7 @@ dist-ssr/
 # Rust / Tauri Build Artifacts
 src-tauri/target/
 src-tauri/.cargo/
+src-tauri/gen/
 **/*.rs.bk
 
 # OS & Editor
