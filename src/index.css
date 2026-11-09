@@ -28,10 +28,6 @@
   }
 }
 
-/* Tauri Draggable Window regions */
-[data-tauri-drag-region] {
-  -webkit-app-region: drag;
-}
 
 /* Minimal Native Scrollbar */
 .custom-scrollbar::-webkit-scrollbar {
@@ -49,5 +45,14 @@
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: rgba(120, 120, 128, 0.35);
+}
+
+/* Custom window chrome & drag region controls */
+[data-tauri-drag-region] {
+  -webkit-app-region: drag;
+}
+
+button, input, select, textarea, [data-tauri-drag-region="false"] {
+  -webkit-app-region: no-drag;
 }
 
