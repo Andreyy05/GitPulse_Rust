@@ -180,16 +180,26 @@ pub fn run() {
                 })
                 .build(app)?;
 
-            // Register Global Shortcut: CommandOrControl+Shift+G
+            // Register Cross-Platform Global Accelerator: CommandOrControl+Shift+G
+            // Maps automatically to Cmd+Shift+G on macOS and Ctrl+Shift+G on Windows/Linux
+            const GLOBAL_SHORTCUT: &str = "CommandOrControl+Shift+G";
             let app_handle = app.handle().clone();
-            if let Err(err) = app.global_shortcut().on_shortcut("CommandOrControl+Shift+G", move |_app, _shortcut, event| {
+            match app.global_shortcut().on_shortcut(GLOBAL_SHORTCUT, move |_app, _shortcut, event| {
                 if event.state() == ShortcutState::Pressed {
                     if let Some(window) = app_handle.get_webview_window("main") {
                         toggle_window(&window);
                     }
                 }
             }) {
-                eprintln!("[GitPulse] Warning: Could not register global shortcut: {err}");
+                Ok(_) => {
+                    #[cfg(target_os = "macos")]
+                    println!("[GitPulse] Global shortcut registered: Cmd+Shift+G");
+                    #[cfg(not(target_os = "macos"))]
+                    println!("[GitPulse] Global shortcut registered: Ctrl+Shift+G");
+                }
+                Err(err) => {
+                    eprintln!("[GitPulse] Warning: Could not register global shortcut '{GLOBAL_SHORTCUT}': {err}");
+                }
             }
 
             Ok(())
