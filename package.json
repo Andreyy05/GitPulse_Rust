@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "tauri dev",
     "build": "tauri build",
+    "tauri": "tauri",
     "postbuild": "python scripts/embed_resources.py",
     "build:release": "npm run vite:build && cargo build --release --manifest-path src-tauri/Cargo.toml && python scripts/embed_resources.py",
     "embed": "python scripts/embed_resources.py",
