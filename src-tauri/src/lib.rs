@@ -131,11 +131,18 @@ pub fn run() {
             let menu = Menu::with_items(app, &[&open_i, &refresh_i, &quit_i])?;
 
             // Build System Tray
+            #[cfg(windows)]
             let tray_icon = app
                 .default_window_icon()
                 .cloned()
                 .or_else(|| tauri::image::Image::from_icon_resource(1u16, 32, 32).ok())
                 .expect("failed to load tray icon");
+
+            #[cfg(not(windows))]
+            let tray_icon = app
+                .default_window_icon()
+                .cloned()
+                .unwrap_or_else(|| tauri::include_image!("icons/32x32.png"));
 
             let _tray = TrayIconBuilder::with_id("main_tray")
                 .icon(tray_icon)
