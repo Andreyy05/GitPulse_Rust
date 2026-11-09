@@ -18,7 +18,6 @@ Built with **Tauri v2**, **Rust**, **React 18**, and **Tailwind CSS**.
 [![React](https://img.shields.io/badge/React-18-20232A?logo=react&logoColor=61DAFB)](https://react.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3-38B2AC?logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 [![Platform](https://img.shields.io/badge/Platform-Windows-0078D6?logo=windows&logoColor=white)](https://www.microsoft.com/windows)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 </div>
 
@@ -185,12 +184,6 @@ Configuration options are managed through the settings interface and persisted v
 * **Polling Interval:** Automated background sync cadence (15, 30, or 60 minutes).
 * **Discord Webhook URL:** Webhook endpoint for automated status delivery to Discord servers.
 * **Launch on Startup:** Toggles system startup persistence.
-
----
-
-## 📄 License
-
-Distributed under the MIT License. See [LICENSE](LICENSE) for full legal text.
 
 ---
 
