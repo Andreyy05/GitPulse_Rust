@@ -6,6 +6,7 @@ import { CommitFuel } from './components/CommitFuel';
 import { SettingsModal } from './components/SettingsModal';
 import { fetchGitHubActivity } from './services/github';
 import { sendDesktopNotification, sendDiscordWebhook } from './services/notifications';
+import { playAlertChime, playEmergencyChime } from './services/audio';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { isEnabled as isAutostartEnabled, enable as enableAutostart, disable as disableAutostart } from '@tauri-apps/plugin-autostart';
@@ -26,6 +27,14 @@ export function App() {
 
   const [alertTime, setAlertTime] = useState(() => {
     return localStorage.getItem('gitpulse_alert_time') || '18:00';
+  });
+
+  const [midnightAlert, setMidnightAlert] = useState(() => {
+    return localStorage.getItem('gitpulse_midnight_alert') !== 'false';
+  });
+
+  const [soundAlert, setSoundAlert] = useState(() => {
+    return localStorage.getItem('gitpulse_sound_alert') !== 'false';
   });
 
   const [discordWebhook, setDiscordWebhook] = useState(() => {
@@ -157,6 +166,11 @@ export function App() {
       if (currentMinutes >= targetMinutes && data && !data.hasPushedToday) {
         localStorage.setItem(lastAlertKey, 'true');
 
+        // Play audible alert chime if enabled
+        if (soundAlert) {
+          playAlertChime();
+        }
+
         // 1. Desktop Notification
         await sendDesktopNotification(
           '⚠️ GitPulse Streak Alert',
@@ -183,7 +197,57 @@ export function App() {
     checkDailyAlert();
 
     return () => clearInterval(alertTimer);
-  }, [data, eveningAlert, alertTime, username, discordWebhook]);
+  }, [data, eveningAlert, soundAlert, alertTime, username, discordWebhook]);
+
+  // Emergency 30-Minute Midnight Streak Reminder check
+  useEffect(() => {
+    if (!midnightAlert) return;
+
+    const checkMidnightAlert = async () => {
+      const now = new Date();
+      const todayStr = now.toISOString().split('T')[0];
+      const lastMidnightAlertKey = `gitpulse_last_midnight_alert_${todayStr}`;
+      const alreadyAlerted = localStorage.getItem(lastMidnightAlertKey);
+
+      if (alreadyAlerted) return;
+
+      const currentMinutes = now.getHours() * 60 + now.getMinutes();
+      // 23:30 threshold (1410 minutes into the day)
+      const midnightThreshold = 23 * 60 + 30;
+
+      if (currentMinutes >= midnightThreshold && data && !data.hasPushedToday) {
+        localStorage.setItem(lastMidnightAlertKey, 'true');
+
+        if (soundAlert) {
+          playEmergencyChime();
+        }
+
+        // 1. High priority Desktop Notification
+        await sendDesktopNotification(
+          '🚨 GitPulse Emergency Reminder',
+          `Only 30 minutes until midnight! You haven't pushed any commits today. Push now to protect your streak!`
+        );
+
+        // 2. Urgent Discord Webhook notification if enabled
+        if (discordWebhook && discordWebhook.trim()) {
+          try {
+            await sendDiscordWebhook(discordWebhook, {
+              username,
+              commitsToday: 0,
+              customMessage: `🚨 **GitPulse Emergency Alert**: Less than 30 minutes remaining until midnight! @${username} has not pushed any commits today. Protect your streak now! ⏳🔥`,
+            });
+          } catch (err) {
+            console.error('Discord emergency webhook alert failed:', err);
+          }
+        }
+      }
+    };
+
+    const midnightTimer = setInterval(checkMidnightAlert, 30 * 1000);
+    checkMidnightAlert();
+
+    return () => clearInterval(midnightTimer);
+  }, [data, midnightAlert, soundAlert, username, discordWebhook]);
 
   // Initial sync for Launch at Startup with Tauri plugin-autostart
   useEffect(() => {
