@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Check, User, Bell, Clock, ShieldCheck, Send, MessageSquare, Rocket, Moon, Sun, Monitor, SunMedium, Eye, EyeOff } from 'lucide-react';
+import { X, Check, User, Bell, Clock, ShieldCheck, Send, MessageSquare, Rocket, Moon, Sun, Monitor, SunMedium, Eye, EyeOff, Volume2, AlertTriangle } from 'lucide-react';
 import { sendDesktopNotification, sendDiscordWebhook } from '../services/notifications';
+import { playAlertChime, playEmergencyChime } from '../services/audio';
 import { enable as enableAutostart, disable as disableAutostart, isEnabled as isAutostartEnabled } from '@tauri-apps/plugin-autostart';
 
 export function SettingsModal({
@@ -12,6 +13,8 @@ export function SettingsModal({
   currentInterval,
   currentEveningAlert,
   currentAlertTime,
+  currentMidnightAlert,
+  currentSoundAlert,
   currentDiscordWebhook,
   currentLaunchAtStartup,
   currentTheme,
@@ -23,6 +26,14 @@ export function SettingsModal({
   const [interval, setInterval] = useState(currentInterval);
   const [eveningAlert, setEveningAlert] = useState(currentEveningAlert);
   const [alertTime, setAlertTime] = useState(currentAlertTime || '18:00');
+  const [midnightAlert, setMidnightAlert] = useState(() => {
+    if (typeof currentMidnightAlert === 'boolean') return currentMidnightAlert;
+    return localStorage.getItem('gitpulse_midnight_alert') !== 'false';
+  });
+  const [soundAlert, setSoundAlert] = useState(() => {
+    if (typeof currentSoundAlert === 'boolean') return currentSoundAlert;
+    return localStorage.getItem('gitpulse_sound_alert') !== 'false';
+  });
   const [hours, setHours] = useState(() => (currentAlertTime || '18:00').split(':')[0] || '18');
   const [minutes, setMinutes] = useState(() => (currentAlertTime || '18:00').split(':')[1] || '00');
   const hourInputRef = useRef(null);
@@ -167,8 +178,18 @@ export function SettingsModal({
       const [h, m] = initialAlert.split(':');
       setHours((h || '18').padStart(2, '0'));
       setMinutes((m || '00').padStart(2, '0'));
+      if (typeof currentMidnightAlert === 'boolean') {
+        setMidnightAlert(currentMidnightAlert);
+      } else {
+        setMidnightAlert(localStorage.getItem('gitpulse_midnight_alert') !== 'false');
+      }
+      if (typeof currentSoundAlert === 'boolean') {
+        setSoundAlert(currentSoundAlert);
+      } else {
+        setSoundAlert(localStorage.getItem('gitpulse_sound_alert') !== 'false');
+      }
     }
-  }, [isOpen, currentTheme, currentPat, currentGithubToken, currentAlertTime]);
+  }, [isOpen, currentTheme, currentPat, currentGithubToken, currentAlertTime, currentMidnightAlert, currentSoundAlert]);
 
   // Sync startup state from Tauri Autostart plugin when modal opens
   useEffect(() => {
@@ -203,6 +224,8 @@ export function SettingsModal({
     }
     localStorage.setItem('gitpulse_launch_at_startup', String(launchAtStartup));
     localStorage.setItem('gitpulse_pat', pat.trim());
+    localStorage.setItem('gitpulse_midnight_alert', String(midnightAlert));
+    localStorage.setItem('gitpulse_sound_alert', String(soundAlert));
 
     onSave({
       username: username.trim(),
@@ -211,6 +234,8 @@ export function SettingsModal({
       refreshInterval: Number(interval),
       eveningAlert,
       alertTime,
+      midnightAlert,
+      soundAlert,
       discordWebhook: discordWebhook.trim(),
       launchAtStartup,
       theme,
@@ -226,6 +251,10 @@ export function SettingsModal({
   const handleTestNotification = async () => {
     setTestStatus('testing');
     try {
+      if (soundAlert) {
+        playAlertChime();
+      }
+
       await sendDesktopNotification(
         '🔔 GitPulse Notification Test',
         `Test alert at ${alertTime}! Streak monitoring is active for @${username.trim() || 'user'}.`
@@ -480,6 +509,65 @@ export function SettingsModal({
                 </div>
               </div>
             )}
+          </div>
+
+          {/* Emergency Midnight Reminder (23:30) */}
+          <div className="pt-2 border-t border-zinc-200/80 dark:border-white/[0.06] space-y-2">
+            <label className="flex items-start space-x-2.5 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={midnightAlert}
+                onChange={(e) => setMidnightAlert(e.target.checked)}
+                className="mt-0.5 rounded border-zinc-300 dark:border-zinc-700 bg-white dark:bg-white/[0.04] text-amber-600 dark:text-amber-500 focus:ring-0 cursor-pointer"
+              />
+              <div className="flex flex-col">
+                <span className="text-zinc-800 dark:text-zinc-200 font-medium tracking-tight flex items-center space-x-1">
+                  <AlertTriangle size={11} className="text-amber-500" />
+                  <span>Emergency Midnight Reminder (23:30)</span>
+                </span>
+                <span className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-0.5">
+                  Upozornit 30 minut před půlnocí, pokud dnes ještě nebyl commit.
+                </span>
+              </div>
+            </label>
+          </div>
+
+          {/* Audible Chime Alert */}
+          <div className="pt-2 border-t border-zinc-200/80 dark:border-white/[0.06] flex items-center justify-between">
+            <div className="flex flex-col pr-2">
+              <span className="text-zinc-800 dark:text-zinc-200 font-medium tracking-tight flex items-center space-x-1.5">
+                <Volume2 size={12} className="text-zinc-500 dark:text-zinc-400" />
+                <span>Audible Chime Alert</span>
+              </span>
+              <span className="text-[10px] text-zinc-500 dark:text-zinc-400 mt-0.5">
+                Přehraje zvukový tón při upozornění na ohrožený streak.
+              </span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <button
+                type="button"
+                onClick={() => playEmergencyChime()}
+                title="Preview Chime Sound"
+                className="text-[10px] px-2 py-0.5 rounded-md border border-zinc-200/80 dark:border-white/[0.08] text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-white/[0.04] transition-colors"
+              >
+                Preview
+              </button>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={soundAlert}
+                onClick={() => setSoundAlert(!soundAlert)}
+                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                  soundAlert ? 'bg-emerald-500' : 'bg-zinc-300 dark:bg-white/10'
+                }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition duration-200 ease-in-out ${
+                    soundAlert ? 'translate-x-4' : 'translate-x-0'
+                  }`}
+                />
+              </button>
+            </div>
           </div>
 
           {/* Optional Discord Webhook Alert */}

@@ -297,6 +297,8 @@ export function App() {
     refreshInterval: newInterval,
     eveningAlert: newEveningAlert,
     alertTime: newAlertTime,
+    midnightAlert: newMidnightAlert,
+    soundAlert: newSoundAlert,
     discordWebhook: newDiscordWebhook,
     launchAtStartup: newLaunchAtStartup,
     theme: newTheme,
@@ -307,6 +309,14 @@ export function App() {
     setRefreshInterval(newInterval);
     setEveningAlert(newEveningAlert);
     setAlertTime(newAlertTime);
+    if (typeof newMidnightAlert === 'boolean') {
+      setMidnightAlert(newMidnightAlert);
+      localStorage.setItem('gitpulse_midnight_alert', String(newMidnightAlert));
+    }
+    if (typeof newSoundAlert === 'boolean') {
+      setSoundAlert(newSoundAlert);
+      localStorage.setItem('gitpulse_sound_alert', String(newSoundAlert));
+    }
     setDiscordWebhook(newDiscordWebhook);
 
     localStorage.setItem('gitpulse_username', newUsername);
@@ -372,6 +382,8 @@ export function App() {
         currentInterval={refreshInterval}
         currentEveningAlert={eveningAlert}
         currentAlertTime={alertTime}
+        currentMidnightAlert={midnightAlert}
+        currentSoundAlert={soundAlert}
         currentDiscordWebhook={discordWebhook}
         currentLaunchAtStartup={launchAtStartup}
         currentTheme={theme}
