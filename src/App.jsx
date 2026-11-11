@@ -372,8 +372,8 @@ export function App() {
       />
 
       {/* Main Content Area - Scrollable & Dynamically Adaptive */}
-      <main className="flex-1 w-full p-4 overflow-y-auto overflow-x-hidden custom-scrollbar flex flex-col items-center">
-        <div className="w-full max-w-xl space-y-3.5">
+      <main className="flex-1 w-full p-3.5 sm:p-6 md:p-8 lg:p-10 overflow-y-auto overflow-x-hidden custom-scrollbar flex flex-col items-center justify-start lg:justify-center">
+        <div className="w-full max-w-xl md:max-w-2xl lg:max-w-3xl xl:max-w-4xl space-y-3.5 sm:space-y-5 md:space-y-6 my-auto">
           <StatusCard
             data={data}
             loading={loading}

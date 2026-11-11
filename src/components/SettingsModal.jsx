@@ -286,24 +286,24 @@ export function SettingsModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 dark:bg-black/60 backdrop-blur-md flex items-center justify-center p-3">
-      <div className="w-full max-w-[370px] max-h-[90vh] bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-white/[0.08] rounded-xl shadow-2xl p-4 flex flex-col space-y-3.5 overflow-hidden text-zinc-900 dark:text-zinc-100">
+    <div className="fixed inset-0 z-50 bg-black/40 dark:bg-black/60 backdrop-blur-md flex items-center justify-center p-3 sm:p-6">
+      <div className="w-full max-w-[370px] sm:max-w-[440px] md:max-w-[480px] max-h-[90vh] bg-white dark:bg-zinc-900 border border-zinc-200/90 dark:border-white/[0.08] rounded-xl sm:rounded-2xl shadow-2xl p-4 sm:p-6 flex flex-col space-y-3.5 sm:space-y-4 overflow-hidden text-zinc-900 dark:text-zinc-100">
         {/* Modal Header */}
-        <div className="flex items-center justify-between border-b border-zinc-200/80 dark:border-white/[0.06] pb-2.5">
+        <div className="flex items-center justify-between border-b border-zinc-200/80 dark:border-white/[0.06] pb-2.5 sm:pb-3.5">
           <div className="flex items-center space-x-2">
-            <User size={15} className="text-zinc-500 dark:text-zinc-400" />
-            <h3 className="text-xs font-semibold text-zinc-900 dark:text-zinc-100 tracking-tight">Settings</h3>
+            <User size={15} className="sm:w-4 sm:h-4 text-zinc-500 dark:text-zinc-400" />
+            <h3 className="text-xs sm:text-sm md:text-base font-semibold text-zinc-900 dark:text-zinc-100 tracking-tight">Settings</h3>
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-md text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-white/[0.06] transition-colors"
+            className="p-1 sm:p-1.5 rounded-md sm:rounded-lg text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-white/[0.06] transition-colors"
           >
-            <X size={14} />
+            <X size={14} className="sm:w-4 sm:h-4" />
           </button>
         </div>
 
         {/* Scrollable Settings Form */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto space-y-3.5 text-xs pr-1 custom-scrollbar">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto space-y-3.5 sm:space-y-4 text-xs sm:text-sm pr-1 custom-scrollbar">
           {/* Appearance / Theme Segmented Control */}
           <div className="flex flex-col space-y-1.5">
             <label className="text-zinc-700 dark:text-zinc-300 font-medium tracking-tight flex items-center space-x-1">

@@ -54,8 +54,8 @@ export function Header({ status = 'default', onOpenSettings }) {
         }
       }}
       onDoubleClick={handleToggleMaximize}
-      className={`h-9 bg-white/80 dark:bg-zinc-950/70 backdrop-blur-md border-b border-zinc-200/80 dark:border-white/[0.06] ${
-        isMac ? 'px-3' : 'px-3.5'
+      className={`h-9 sm:h-10 bg-white/80 dark:bg-zinc-950/70 backdrop-blur-md border-b border-zinc-200/80 dark:border-white/[0.06] ${
+        isMac ? 'px-3 sm:px-4' : 'px-3.5 sm:px-5'
       } flex items-center justify-between select-none z-50 shrink-0 transition-colors`}
     >
       {isMac ? (
@@ -90,21 +90,21 @@ export function Header({ status = 'default', onOpenSettings }) {
 
           {/* Brand & Live Indicator (Centered on macOS) */}
           <div className="flex items-center space-x-1.5" data-tauri-drag-region>
-            <Activity size={13} className="text-zinc-600 dark:text-zinc-400" data-tauri-drag-region />
-            <span className="text-xs font-semibold tracking-tight text-zinc-900 dark:text-zinc-200" data-tauri-drag-region>
+            <Activity size={14} className="text-zinc-600 dark:text-zinc-400" data-tauri-drag-region />
+            <span className="text-xs sm:text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-200" data-tauri-drag-region>
               GitPulse
             </span>
-            <span className={`w-1.5 h-1.5 rounded-full ${statusDot}`} data-tauri-drag-region />
+            <span className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${statusDot}`} data-tauri-drag-region />
           </div>
 
           {/* macOS Right Action (Settings) */}
-          <div className="flex items-center space-x-0.5" data-tauri-drag-region="false">
+          <div className="flex items-center space-x-1" data-tauri-drag-region="false">
             <button
               onClick={onOpenSettings}
               title="Settings"
-              className="p-1 rounded text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-zinc-200/60 dark:hover:bg-white/[0.06] transition-colors"
+              className="p-1 sm:p-1.5 rounded-md text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-zinc-200/60 dark:hover:bg-white/[0.06] transition-colors"
             >
-              <SettingsIcon size={13} />
+              <SettingsIcon size={14} />
             </button>
           </div>
         </>
@@ -113,46 +113,46 @@ export function Header({ status = 'default', onOpenSettings }) {
           {/* Brand & Live Indicator (Left-aligned on Windows/Linux) */}
           <div className="flex items-center space-x-2" data-tauri-drag-region>
             <div className="flex items-center space-x-1.5" data-tauri-drag-region>
-              <Activity size={13} className="text-zinc-600 dark:text-zinc-400" data-tauri-drag-region />
-              <span className="text-xs font-semibold tracking-tight text-zinc-900 dark:text-zinc-200" data-tauri-drag-region>
+              <Activity size={14} className="text-zinc-600 dark:text-zinc-400" data-tauri-drag-region />
+              <span className="text-xs sm:text-sm font-semibold tracking-tight text-zinc-900 dark:text-zinc-200" data-tauri-drag-region>
                 GitPulse
               </span>
-              <span className={`w-1.5 h-1.5 rounded-full ${statusDot}`} data-tauri-drag-region />
+              <span className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${statusDot}`} data-tauri-drag-region />
             </div>
           </div>
 
           {/* Window Controls (Right-aligned on Windows/Linux) */}
-          <div className="flex items-center space-x-0.5" data-tauri-drag-region="false">
+          <div className="flex items-center space-x-0.5 sm:space-x-1" data-tauri-drag-region="false">
             <button
               onClick={onOpenSettings}
               title="Settings"
-              className="p-1 rounded text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-zinc-200/60 dark:hover:bg-white/[0.06] transition-colors"
+              className="p-1 sm:p-1.5 rounded-md text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-zinc-200/60 dark:hover:bg-white/[0.06] transition-colors"
             >
-              <SettingsIcon size={13} />
+              <SettingsIcon size={14} />
             </button>
 
             <button
               onClick={handleMinimize}
               title="Minimize to Tray"
-              className="p-1 rounded text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-zinc-200/60 dark:hover:bg-white/[0.06] transition-colors"
+              className="p-1 sm:p-1.5 rounded-md text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-zinc-200/60 dark:hover:bg-white/[0.06] transition-colors"
             >
-              <Minus size={13} />
+              <Minus size={14} />
             </button>
 
             <button
               onClick={handleToggleMaximize}
               title="Maximize / Restore"
-              className="p-1 rounded text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-zinc-200/60 dark:hover:bg-white/[0.06] transition-colors"
+              className="p-1 sm:p-1.5 rounded-md text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-zinc-200/60 dark:hover:bg-white/[0.06] transition-colors"
             >
-              <Square size={11} />
+              <Square size={12} />
             </button>
 
             <button
               onClick={handleClose}
               title="Close (Hide to Tray)"
-              className="p-1 rounded text-zinc-600 hover:text-rose-600 dark:text-zinc-400 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-white/[0.06] transition-colors"
+              className="p-1 sm:p-1.5 rounded-md text-zinc-600 hover:text-rose-600 dark:text-zinc-400 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-white/[0.06] transition-colors"
             >
-              <X size={13} />
+              <X size={14} />
             </button>
           </div>
         </>
