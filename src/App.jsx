@@ -6,7 +6,7 @@ import { CommitFuel } from './components/CommitFuel';
 import { SettingsModal } from './components/SettingsModal';
 import { fetchGitHubActivity } from './services/github';
 import { sendDesktopNotification, sendDiscordWebhook } from './services/notifications';
-import { playAlertChime, playEmergencyChime } from './services/audio';
+import { playAlertChime, playEmergencyChime, playCelebrationChime } from './services/audio';
 import { invoke } from '@tauri-apps/api/core';
 import { listen } from '@tauri-apps/api/event';
 import { isEnabled as isAutostartEnabled, enable as enableAutostart, disable as disableAutostart } from '@tauri-apps/plugin-autostart';
@@ -91,9 +91,12 @@ export function App() {
           console.warn('[GitPulse] Tray update failed:', trayErr);
         }
 
-        // Celebrate with confetti if streak is achieved today
+        // Celebrate with confetti and sound chime if streak is achieved today
         if (result.hasPushedToday && !hasCelebratedRef.current) {
           hasCelebratedRef.current = true;
+          if (soundAlert) {
+            playCelebrationChime();
+          }
           confetti({
             particleCount: 45,
             spread: 60,

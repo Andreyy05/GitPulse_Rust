@@ -37,6 +37,7 @@ export function StatusCard({ data, loading, error, onRefresh }) {
     return {
       formatted: `${pad(hours)}h : ${pad(minutes)}m : ${pad(seconds)}s`,
       isUrgent: hours < 4,
+      isCritical: hours === 0 && minutes < 30,
       progressPercent,
     };
   }
@@ -171,13 +172,29 @@ export function StatusCard({ data, loading, error, onRefresh }) {
           <div className="mt-4 pt-3.5 border-t border-zinc-200/80 dark:border-white/[0.06]">
             <div className="flex items-center justify-between text-xs mb-2">
               <span className="text-zinc-700 dark:text-zinc-400 flex items-center space-x-1.5 font-medium">
-                <Clock size={12} className={timeLeft.isUrgent ? 'text-rose-600 dark:text-rose-400' : 'text-zinc-500 dark:text-zinc-400'} />
+                <Clock
+                  size={12}
+                  className={
+                    !hasPushed && timeLeft.isCritical
+                      ? 'text-rose-500 animate-pulse'
+                      : timeLeft.isUrgent
+                      ? 'text-rose-600 dark:text-rose-400'
+                      : 'text-zinc-500 dark:text-zinc-400'
+                  }
+                />
                 <span>Time until midnight:</span>
+                {!hasPushed && timeLeft.isCritical && (
+                  <span className="text-[10px] font-semibold text-rose-500 bg-rose-500/10 px-1.5 py-0.5 rounded-full animate-pulse border border-rose-500/20">
+                    &lt; 30m EMERGENCY
+                  </span>
+                )}
               </span>
               <span
                 className={`font-mono text-xs font-medium ${
                   hasPushed
                     ? 'text-zinc-800 dark:text-zinc-200'
+                    : timeLeft.isCritical
+                    ? 'text-rose-500 font-bold animate-pulse'
                     : timeLeft.isUrgent
                     ? 'text-rose-600 dark:text-rose-400'
                     : 'text-zinc-800 dark:text-zinc-200'
@@ -193,6 +210,8 @@ export function StatusCard({ data, loading, error, onRefresh }) {
                 className={`h-full transition-all duration-1000 ${
                   hasPushed
                     ? 'bg-emerald-500'
+                    : timeLeft.isCritical
+                    ? 'bg-rose-500 animate-pulse'
                     : timeLeft.isUrgent
                     ? 'bg-rose-500'
                     : 'bg-zinc-800 dark:bg-zinc-300'

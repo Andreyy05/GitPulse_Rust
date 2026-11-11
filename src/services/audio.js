@@ -89,8 +89,42 @@ class SoundService {
       console.warn('[GitPulse] Web Audio emergency chime playback failed:', e);
     }
   }
+  /**
+   * Play a celebratory fanfare chime when a streak is maintained / commit detected
+   */
+  playCelebrationChime() {
+    try {
+      const ctx = this.getAudioContext();
+      if (!ctx) return;
+
+      const now = ctx.currentTime;
+      // Arpeggio: C5 (523.25), E5 (659.25), G5 (783.99), C6 (1046.50)
+      const notes = [
+        { freq: 523.25, start: 0, dur: 0.16 },
+        { freq: 659.25, start: 0.1, dur: 0.18 },
+        { freq: 783.99, start: 0.2, dur: 0.22 },
+        { freq: 1046.5, start: 0.32, dur: 0.55 },
+      ];
+
+      notes.forEach(({ freq, start, dur }) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + start);
+        gain.gain.setValueAtTime(0.14, now + start);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + start + dur);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now + start);
+        osc.stop(now + start + dur + 0.05);
+      });
+    } catch (e) {
+      console.warn('[GitPulse] Web Audio celebration chime playback failed:', e);
+    }
+  }
 }
 
 export const soundService = new SoundService();
 export const playAlertChime = () => soundService.playAlertChime();
 export const playEmergencyChime = () => soundService.playEmergencyChime();
+export const playCelebrationChime = () => soundService.playCelebrationChime();
