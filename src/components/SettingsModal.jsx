@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Check, User, Bell, Clock, ShieldCheck, Send, MessageSquare, Rocket, Moon, Sun, Monitor, SunMedium, Eye, EyeOff, Volume2, AlertTriangle } from 'lucide-react';
 import { sendDesktopNotification, sendDiscordWebhook } from '../services/notifications';
-import { playAlertChime, playEmergencyChime } from '../services/audio';
+import { playAlertChime, playEmergencyChime, setSoundVolume, getSoundVolume } from '../services/audio';
 import { enable as enableAutostart, disable as disableAutostart, isEnabled as isAutostartEnabled } from '@tauri-apps/plugin-autostart';
 
 export function SettingsModal({
@@ -15,6 +15,7 @@ export function SettingsModal({
   currentAlertTime,
   currentMidnightAlert,
   currentSoundAlert,
+  currentSoundVolume,
   currentDiscordWebhook,
   currentLaunchAtStartup,
   currentTheme,
@@ -33,6 +34,10 @@ export function SettingsModal({
   const [soundAlert, setSoundAlert] = useState(() => {
     if (typeof currentSoundAlert === 'boolean') return currentSoundAlert;
     return localStorage.getItem('gitpulse_sound_alert') !== 'false';
+  });
+  const [soundVolume, setSoundVolumeState] = useState(() => {
+    if (typeof currentSoundVolume === 'number') return currentSoundVolume;
+    return getSoundVolume();
   });
   const [hours, setHours] = useState(() => (currentAlertTime || '18:00').split(':')[0] || '18');
   const [minutes, setMinutes] = useState(() => (currentAlertTime || '18:00').split(':')[1] || '00');
@@ -226,6 +231,8 @@ export function SettingsModal({
     localStorage.setItem('gitpulse_pat', pat.trim());
     localStorage.setItem('gitpulse_midnight_alert', String(midnightAlert));
     localStorage.setItem('gitpulse_sound_alert', String(soundAlert));
+    localStorage.setItem('gitpulse_sound_volume', String(soundVolume));
+    setSoundVolume(soundVolume);
 
     onSave({
       username: username.trim(),
@@ -236,6 +243,7 @@ export function SettingsModal({
       alertTime,
       midnightAlert,
       soundAlert,
+      soundVolume,
       discordWebhook: discordWebhook.trim(),
       launchAtStartup,
       theme,
@@ -569,6 +577,30 @@ export function SettingsModal({
               </button>
             </div>
           </div>
+
+          {/* Volume Control Slider */}
+          {soundAlert && (
+            <div className="flex items-center space-x-2.5 pt-1 pl-6">
+              <span className="text-[11px] text-zinc-600 dark:text-zinc-400 font-medium shrink-0">Volume:</span>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                value={soundVolume}
+                onChange={(e) => {
+                  const val = parseFloat(e.target.value);
+                  setSoundVolumeState(val);
+                  setSoundVolume(val);
+                }}
+                onMouseUp={() => playAlertChime()}
+                className="flex-1 h-1 bg-zinc-200 dark:bg-white/10 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+              />
+              <span className="text-[10px] font-mono text-zinc-500 dark:text-zinc-400 w-8 text-right shrink-0">
+                {Math.round(soundVolume * 100)}%
+              </span>
+            </div>
+          )}
 
           {/* Optional Discord Webhook Alert */}
           <div className="pt-2 border-t border-zinc-200/80 dark:border-white/[0.06] space-y-1.5">

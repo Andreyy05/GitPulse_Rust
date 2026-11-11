@@ -37,6 +37,11 @@ export function App() {
     return localStorage.getItem('gitpulse_sound_alert') !== 'false';
   });
 
+  const [soundVolume, setSoundVolumeState] = useState(() => {
+    const saved = localStorage.getItem('gitpulse_sound_volume');
+    return saved !== null ? Number(saved) : 0.8;
+  });
+
   const [discordWebhook, setDiscordWebhook] = useState(() => {
     return localStorage.getItem('gitpulse_discord_webhook') || '';
   });
@@ -302,6 +307,7 @@ export function App() {
     alertTime: newAlertTime,
     midnightAlert: newMidnightAlert,
     soundAlert: newSoundAlert,
+    soundVolume: newSoundVolume,
     discordWebhook: newDiscordWebhook,
     launchAtStartup: newLaunchAtStartup,
     theme: newTheme,
@@ -319,6 +325,10 @@ export function App() {
     if (typeof newSoundAlert === 'boolean') {
       setSoundAlert(newSoundAlert);
       localStorage.setItem('gitpulse_sound_alert', String(newSoundAlert));
+    }
+    if (typeof newSoundVolume === 'number') {
+      setSoundVolumeState(newSoundVolume);
+      localStorage.setItem('gitpulse_sound_volume', String(newSoundVolume));
     }
     setDiscordWebhook(newDiscordWebhook);
 
@@ -387,6 +397,7 @@ export function App() {
         currentAlertTime={alertTime}
         currentMidnightAlert={midnightAlert}
         currentSoundAlert={soundAlert}
+        currentSoundVolume={soundVolume}
         currentDiscordWebhook={discordWebhook}
         currentLaunchAtStartup={launchAtStartup}
         currentTheme={theme}

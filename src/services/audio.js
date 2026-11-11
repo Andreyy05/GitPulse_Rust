@@ -6,6 +6,19 @@
 class SoundService {
   constructor() {
     this.ctx = null;
+    const saved = typeof localStorage !== 'undefined' ? localStorage.getItem('gitpulse_sound_volume') : null;
+    this.volume = saved !== null ? Math.max(0, Math.min(1, Number(saved))) : 0.8;
+  }
+
+  setVolume(vol) {
+    this.volume = Math.max(0, Math.min(1, Number(vol)));
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem('gitpulse_sound_volume', String(this.volume));
+    }
+  }
+
+  getVolume() {
+    return this.volume;
   }
 
   getAudioContext() {
@@ -26,17 +39,20 @@ class SoundService {
    */
   playAlertChime() {
     try {
+      if (this.volume <= 0) return;
       const ctx = this.getAudioContext();
       if (!ctx) return;
 
       const now = ctx.currentTime;
+      const vol = this.volume;
+
       // Tone 1: E5 (659.25 Hz)
       const osc1 = ctx.createOscillator();
       const gain1 = ctx.createGain();
       osc1.type = 'sine';
       osc1.frequency.setValueAtTime(659.25, now);
-      gain1.gain.setValueAtTime(0.12, now);
-      gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+      gain1.gain.setValueAtTime(0.12 * vol, now);
+      gain1.gain.exponentialRampToValueAtTime(0.001 * vol, now + 0.28);
       osc1.connect(gain1);
       gain1.connect(ctx.destination);
       osc1.start(now);
@@ -47,8 +63,8 @@ class SoundService {
       const gain2 = ctx.createGain();
       osc2.type = 'sine';
       osc2.frequency.setValueAtTime(880.0, now + 0.12);
-      gain2.gain.setValueAtTime(0.15, now + 0.12);
-      gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+      gain2.gain.setValueAtTime(0.15 * vol, now + 0.12);
+      gain2.gain.exponentialRampToValueAtTime(0.001 * vol, now + 0.45);
       osc2.connect(gain2);
       gain2.connect(ctx.destination);
       osc2.start(now + 0.12);
@@ -63,10 +79,13 @@ class SoundService {
    */
   playEmergencyChime() {
     try {
+      if (this.volume <= 0) return;
       const ctx = this.getAudioContext();
       if (!ctx) return;
 
       const now = ctx.currentTime;
+      const vol = this.volume;
+
       const notes = [
         { freq: 587.33, start: 0, dur: 0.18 },   // D5
         { freq: 739.99, start: 0.11, dur: 0.2 }, // F#5
@@ -78,8 +97,8 @@ class SoundService {
         const gain = ctx.createGain();
         osc.type = 'triangle';
         osc.frequency.setValueAtTime(freq, now + start);
-        gain.gain.setValueAtTime(0.18, now + start);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + start + dur);
+        gain.gain.setValueAtTime(0.18 * vol, now + start);
+        gain.gain.exponentialRampToValueAtTime(0.001 * vol, now + start + dur);
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.start(now + start);
@@ -89,15 +108,19 @@ class SoundService {
       console.warn('[GitPulse] Web Audio emergency chime playback failed:', e);
     }
   }
+
   /**
    * Play a celebratory fanfare chime when a streak is maintained / commit detected
    */
   playCelebrationChime() {
     try {
+      if (this.volume <= 0) return;
       const ctx = this.getAudioContext();
       if (!ctx) return;
 
       const now = ctx.currentTime;
+      const vol = this.volume;
+
       // Arpeggio: C5 (523.25), E5 (659.25), G5 (783.99), C6 (1046.50)
       const notes = [
         { freq: 523.25, start: 0, dur: 0.16 },
@@ -111,8 +134,8 @@ class SoundService {
         const gain = ctx.createGain();
         osc.type = 'sine';
         osc.frequency.setValueAtTime(freq, now + start);
-        gain.gain.setValueAtTime(0.14, now + start);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + start + dur);
+        gain.gain.setValueAtTime(0.14 * vol, now + start);
+        gain.gain.exponentialRampToValueAtTime(0.001 * vol, now + start + dur);
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.start(now + start);
@@ -128,3 +151,5 @@ export const soundService = new SoundService();
 export const playAlertChime = () => soundService.playAlertChime();
 export const playEmergencyChime = () => soundService.playEmergencyChime();
 export const playCelebrationChime = () => soundService.playCelebrationChime();
+export const setSoundVolume = (vol) => soundService.setVolume(vol);
+export const getSoundVolume = () => soundService.getVolume();
