@@ -1,6 +1,7 @@
 /**
  * GitHub API service to fetch user activity, profile avatar, and determine daily commit streak status.
  * Combines the official GitHub contribution calendar (real contribution graph) with PushEvents.
+ * Includes local storage snapshot caching and offline fallback.
  */
 import { invoke } from '@tauri-apps/api/core';
 
@@ -105,205 +106,253 @@ export async function fetchGitHubActivity(username, optionalToken = '') {
   }
 
   const cleanUser = username.trim();
-  const token =
-    (optionalToken && optionalToken.trim()) ||
-    (typeof localStorage !== 'undefined' && localStorage.getItem
-      ? localStorage.getItem('gitpulse_pat') || localStorage.getItem('gitpulse_github_token') || ''
-      : '') ||
-    '';
+  const cacheKey = `gitpulse_cached_activity_${cleanUser.toLowerCase()}`;
 
-  const headers = {
-    'Accept': 'application/vnd.github.v3+json',
-    'User-Agent': 'GitPulse-Desktop',
-  };
-
-  if (token && token.trim()) {
-    headers['Authorization'] = `Bearer ${token.trim()}`;
-  }
-
-  let avatarUrl = `https://avatars.githubusercontent.com/${cleanUser}`;
-  let rateLimitWarning = null;
-
-  // Helper to inspect rate-limiting on responses
-  const checkRateLimit = (res) => {
-    const remaining = res.headers.get('x-ratelimit-remaining');
-    const resetUnix = res.headers.get('x-ratelimit-reset');
-    if (res.status === 403 || remaining === '0') {
-      const resetDate = resetUnix ? new Date(parseInt(resetUnix, 10) * 1000) : null;
-      const resetTime = resetDate ? resetDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'soon';
-      const warning = `GitHub API rate limit exceeded. Resets at ${resetTime}`;
-      console.warn(`[GitPulse] ${warning}`);
-      rateLimitWarning = warning;
-      return true;
-    }
-    return false;
-  };
-
-  // 1. Fetch user profile to get exact avatar_url and check user existence
-  try {
-    const profileRes = await fetch(
-      `https://api.github.com/users/${encodeURIComponent(cleanUser)}`,
-      { headers }
-    );
-
-    if (profileRes.status === 404) {
-      throw new Error(`GitHub user "@${cleanUser}" not found.`);
-    }
-
-    if (checkRateLimit(profileRes)) {
-      // If profile is rate limited, rateLimitWarning is recorded
-    } else if (profileRes.ok) {
-      const profile = await profileRes.json();
-      if (profile?.avatar_url) {
-        avatarUrl = profile.avatar_url;
+  const loadFromCache = (reason) => {
+    try {
+      const raw = localStorage.getItem(cacheKey);
+      if (raw) {
+        const cached = JSON.parse(raw);
+        return {
+          ...cached,
+          isOffline: true,
+          offlineReason: reason || 'Working in offline mode',
+          updatedAt: cached.updatedAt ? new Date(cached.updatedAt) : new Date(),
+        };
       }
+    } catch (e) {
+      console.warn('[GitPulse] Failed reading local cache:', e);
     }
-  } catch (err) {
-    if (err.message && err.message.includes('not found')) {
-      throw err;
-    }
-    console.warn('[GitPulse] User profile fetch warning:', err);
+    return null;
+  };
+
+  // Immediate offline detection
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+    const cached = loadFromCache('Network is disconnected (Offline)');
+    if (cached) return cached;
   }
 
-  // 2. Concurrently fetch official contributions calendar & Events API
-  let calendarMap = {};
   try {
-    calendarMap = await fetchContributionsCalendar(cleanUser);
-  } catch (err) {
-    console.warn('[GitPulse] Error in fetchContributionsCalendar:', err);
-  }
+    const token =
+      (optionalToken && optionalToken.trim()) ||
+      (typeof localStorage !== 'undefined' && localStorage.getItem
+        ? localStorage.getItem('gitpulse_pat') || localStorage.getItem('gitpulse_github_token') || ''
+        : '') ||
+      '';
 
-  // 3. Query GitHub Events API with ?per_page=100
-  const endpoint = token
-    ? 'https://api.github.com/user/events?per_page=100'
-    : `https://api.github.com/users/${encodeURIComponent(cleanUser)}/events?per_page=100`;
+    const headers = {
+      'Accept': 'application/vnd.github.v3+json',
+      'User-Agent': 'GitPulse-Desktop',
+    };
 
-  let eventsRes = null;
-  try {
-    eventsRes = await fetch(endpoint, { headers });
+    if (token && token.trim()) {
+      headers['Authorization'] = `Bearer ${token.trim()}`;
+    }
 
-    // Fallback to /users/{username}/events if /user/events fails
-    if (!eventsRes.ok && token && endpoint.includes('/user/events')) {
-      eventsRes = await fetch(
-        `https://api.github.com/users/${encodeURIComponent(cleanUser)}/events?per_page=100`,
+    let avatarUrl = `https://avatars.githubusercontent.com/${cleanUser}`;
+    let rateLimitWarning = null;
+
+    // Helper to inspect rate-limiting on responses
+    const checkRateLimit = (res) => {
+      const remaining = res.headers.get('x-ratelimit-remaining');
+      const resetUnix = res.headers.get('x-ratelimit-reset');
+      if (res.status === 403 || remaining === '0') {
+        const resetDate = resetUnix ? new Date(parseInt(resetUnix, 10) * 1000) : null;
+        const resetTime = resetDate ? resetDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'soon';
+        const warning = `GitHub API rate limit exceeded. Resets at ${resetTime}`;
+        console.warn(`[GitPulse] ${warning}`);
+        rateLimitWarning = warning;
+        return true;
+      }
+      return false;
+    };
+
+    // 1. Fetch user profile to get exact avatar_url and check user existence
+    try {
+      const profileRes = await fetch(
+        `https://api.github.com/users/${encodeURIComponent(cleanUser)}`,
         { headers }
       );
-    }
-  } catch (err) {
-    console.warn('[GitPulse] Events fetch error:', err);
-  }
 
-  let rawEventsList = [];
-  if (eventsRes && eventsRes.ok) {
-    const parsed = await eventsRes.json();
-    rawEventsList = Array.isArray(parsed) ? parsed : [];
-  } else if (eventsRes) {
-    checkRateLimit(eventsRes);
-  }
-
-  // Filter for PushEvents only
-  const pushEvents = rawEventsList.filter((e) => e.type === 'PushEvent');
-
-  // If avatar was not fetched from profile, fallback to actor avatar from event
-  if (rawEventsList[0]?.actor?.avatar_url && avatarUrl.includes('avatars.githubusercontent.com/' + cleanUser)) {
-    avatarUrl = rawEventsList[0].actor.avatar_url;
-  }
-
-  // 4. Parse push events for today's push list and supplementary counts
-  const pushCountsByDate = {};
-  const recentPushes = [];
-  const todayKey = formatLocalDateKey(new Date());
-
-  for (const event of pushEvents) {
-    const commits = event.payload?.commits;
-    const eventDateKey = formatLocalDateKey(event.created_at);
-
-    if (Array.isArray(commits) && commits.length > 0) {
-      for (const commit of commits) {
-        const commitDateRaw = commit.timestamp || commit.author?.date || event.created_at;
-        const commitDateKey = formatLocalDateKey(commitDateRaw);
-        pushCountsByDate[commitDateKey] = (pushCountsByDate[commitDateKey] || 0) + 1;
+      if (profileRes.status === 404) {
+        throw new Error(`GitHub user "@${cleanUser}" not found.`);
       }
-    } else {
-      const size = event.payload?.size || event.payload?.distinct_size || 1;
-      pushCountsByDate[eventDateKey] = (pushCountsByDate[eventDateKey] || 0) + size;
+
+      if (checkRateLimit(profileRes)) {
+        // If profile is rate limited, rateLimitWarning is recorded
+      } else if (profileRes.ok) {
+        const profile = await profileRes.json();
+        if (profile?.avatar_url) {
+          avatarUrl = profile.avatar_url;
+        }
+      }
+    } catch (err) {
+      if (err.message && err.message.includes('not found')) {
+        throw err;
+      }
+      console.warn('[GitPulse] User profile fetch warning:', err);
     }
 
-    // Recent pushes details for today
-    if (eventDateKey === todayKey) {
-      const eventDate = new Date(event.created_at);
-      const repoName = event.repo?.name || 'unknown/repo';
-      const commitCount = Array.isArray(commits) && commits.length > 0 ? commits.length : (event.payload?.size || 1);
-      const latestMessage =
-        commits?.[0]?.message?.split('\n')[0] ||
-        (commitCount > 1 ? `${commitCount} commits` : 'Code push');
+    // 2. Concurrently fetch official contributions calendar & Events API
+    let calendarMap = {};
+    try {
+      calendarMap = await fetchContributionsCalendar(cleanUser);
+    } catch (err) {
+      console.warn('[GitPulse] Error in fetchContributionsCalendar:', err);
+    }
 
-      recentPushes.push({
-        id: String(event.id),
-        repo: repoName,
-        repoUrl: `https://github.com/${repoName}`,
-        commitCount,
-        latestMessage,
-        time: eventDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        timestamp: eventDate.getTime(),
+    // 3. Query GitHub Events API with ?per_page=100
+    const endpoint = token
+      ? 'https://api.github.com/user/events?per_page=100'
+      : `https://api.github.com/users/${encodeURIComponent(cleanUser)}/events?per_page=100`;
+
+    let eventsRes = null;
+    try {
+      eventsRes = await fetch(endpoint, { headers });
+
+      // Fallback to /users/{username}/events if /user/events fails
+      if (!eventsRes.ok && token && endpoint.includes('/user/events')) {
+        eventsRes = await fetch(
+          `https://api.github.com/users/${encodeURIComponent(cleanUser)}/events?per_page=100`,
+          { headers }
+        );
+      }
+    } catch (err) {
+      console.warn('[GitPulse] Events fetch error:', err);
+    }
+
+    let rawEventsList = [];
+    if (eventsRes && eventsRes.ok) {
+      const parsed = await eventsRes.json();
+      rawEventsList = Array.isArray(parsed) ? parsed : [];
+    } else if (eventsRes) {
+      checkRateLimit(eventsRes);
+    }
+
+    // Filter for PushEvents only
+    const pushEvents = rawEventsList.filter((e) => e.type === 'PushEvent');
+
+    // If avatar was not fetched from profile, fallback to actor avatar from event
+    if (rawEventsList[0]?.actor?.avatar_url && avatarUrl.includes('avatars.githubusercontent.com/' + cleanUser)) {
+      avatarUrl = rawEventsList[0].actor.avatar_url;
+    }
+
+    // 4. Parse push events for today's push list and supplementary counts
+    const pushCountsByDate = {};
+    const recentPushes = [];
+    const todayKey = formatLocalDateKey(new Date());
+
+    for (const event of pushEvents) {
+      const commits = event.payload?.commits;
+      const eventDateKey = formatLocalDateKey(event.created_at);
+
+      if (Array.isArray(commits) && commits.length > 0) {
+        for (const commit of commits) {
+          const commitDateRaw = commit.timestamp || commit.author?.date || event.created_at;
+          const commitDateKey = formatLocalDateKey(commitDateRaw);
+          pushCountsByDate[commitDateKey] = (pushCountsByDate[commitDateKey] || 0) + 1;
+        }
+      } else {
+        const size = event.payload?.size || event.payload?.distinct_size || 1;
+        pushCountsByDate[eventDateKey] = (pushCountsByDate[eventDateKey] || 0) + size;
+      }
+
+      // Recent pushes details for today
+      if (eventDateKey === todayKey) {
+        const eventDate = new Date(event.created_at);
+        const repoName = event.repo?.name || 'unknown/repo';
+        const commitCount = Array.isArray(commits) && commits.length > 0 ? commits.length : (event.payload?.size || 1);
+        const latestMessage =
+          commits?.[0]?.message?.split('\n')[0] ||
+          (commitCount > 1 ? `${commitCount} commits` : 'Code push');
+
+        recentPushes.push({
+          id: String(event.id),
+          repo: repoName,
+          repoUrl: `https://github.com/${repoName}`,
+          commitCount,
+          latestMessage,
+          time: eventDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          timestamp: eventDate.getTime(),
+        });
+      }
+    }
+
+    // 5. Generate 14-day timeline (chronologically: index 0 is 13 days ago, index 13 is TODAY)
+    const days = [];
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+      const calDay = calendarMap[dateKey];
+      const pushCount = pushCountsByDate[dateKey] || 0;
+
+      let count = 0;
+      if (calDay && calDay.count !== undefined) {
+        count = Math.max(calDay.count, pushCount);
+      } else {
+        count = pushCount;
+      }
+
+      const level = calDay && calDay.level !== undefined ? calDay.level : calculateHeatmapLevel(count);
+
+      days.push({
+        date: dateKey,
+        count,
+        level: Math.min(Math.max(level, calculateHeatmapLevel(count)), 3),
+        isToday: i === 0,
       });
     }
-  }
 
-  // 5. Generate 14-day timeline (chronologically: index 0 is 13 days ago, index 13 is TODAY)
-  const days = [];
-  for (let i = 13; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    // 6. Connect today's commit status
+    const todayCommits = days[13]?.count || 0;
+    const totalCommits = days.reduce((acc, curr) => acc + curr.count, 0);
 
-    const calDay = calendarMap[dateKey];
-    const pushCount = pushCountsByDate[dateKey] || 0;
+    // 7. Calculate current streak & best streak from the full-year calendar data
+    const { currentStreak, bestStreak } = calculateStreaks(calendarMap, pushCountsByDate, todayKey);
 
-    let count = 0;
-    if (calDay && calDay.count !== undefined) {
-      count = Math.max(calDay.count, pushCount);
-    } else {
-      count = pushCount;
+    // Sort pushes newest first
+    recentPushes.sort((a, b) => b.timestamp - a.timestamp);
+    const lastPush = recentPushes.length > 0 ? recentPushes[0] : null;
+
+    const result = {
+      username: cleanUser,
+      avatarUrl,
+      hasPushedToday: todayCommits > 0,
+      totalCommitsToday: todayCommits,
+      totalPushEventsToday: recentPushes.length || (todayCommits > 0 ? 1 : 0),
+      lastPushTime: lastPush ? lastPush.time : (todayCommits > 0 ? 'Today' : null),
+      recentPushes: recentPushes.slice(0, 3),
+      history14Days: days,
+      total14DaysCommits: totalCommits,
+      currentStreak,
+      bestStreak,
+      isOffline: false,
+      offlineReason: null,
+      rateLimitWarning,
+      updatedAt: new Date(),
+    };
+
+    // Save to local cache for offline resiliency
+    try {
+      localStorage.setItem(cacheKey, JSON.stringify({
+        ...result,
+        updatedAt: result.updatedAt.toISOString(),
+      }));
+    } catch (e) {
+      console.warn('[GitPulse] Cache storage error:', e);
     }
 
-    const level = calDay && calDay.level !== undefined ? calDay.level : calculateHeatmapLevel(count);
-
-    days.push({
-      date: dateKey,
-      count,
-      level: Math.min(Math.max(level, calculateHeatmapLevel(count)), 3),
-      isToday: i === 0,
-    });
+    return result;
+  } catch (err) {
+    console.warn('[GitPulse] Error fetching activity, attempting offline cache:', err);
+    const cached = loadFromCache(err.message || 'Unable to connect to GitHub');
+    if (cached) {
+      return cached;
+    }
+    throw err;
   }
-
-  // 6. Connect today's commit status
-  const todayCommits = days[13]?.count || 0;
-  const totalCommits = days.reduce((acc, curr) => acc + curr.count, 0);
-
-  // 7. Calculate current streak & best streak from the full-year calendar data
-  //    calendarMap has all days with contributions for the past year
-  const { currentStreak, bestStreak } = calculateStreaks(calendarMap, pushCountsByDate, todayKey);
-
-  // Sort pushes newest first
-  recentPushes.sort((a, b) => b.timestamp - a.timestamp);
-  const lastPush = recentPushes.length > 0 ? recentPushes[0] : null;
-
-  return {
-    username: cleanUser,
-    avatarUrl,
-    hasPushedToday: todayCommits > 0,
-    totalCommitsToday: todayCommits,
-    totalPushEventsToday: recentPushes.length || (todayCommits > 0 ? 1 : 0),
-    lastPushTime: lastPush ? lastPush.time : (todayCommits > 0 ? 'Today' : null),
-    recentPushes: recentPushes.slice(0, 3),
-    history14Days: days,
-    total14DaysCommits: totalCommits,
-    currentStreak,
-    bestStreak,
-    rateLimitWarning,
-    updatedAt: new Date(),
-  };
 }
 
 /**
@@ -311,7 +360,6 @@ export async function fetchGitHubActivity(username, optionalToken = '') {
  * Uses the full year of calendarMap data, supplemented by pushCountsByDate for today.
  */
 function calculateStreaks(calendarMap, pushCountsByDate, todayKey) {
-  // Build a helper: get commit count for a date key
   const getCount = (dateKey) => {
     const cal = calendarMap[dateKey];
     const push = pushCountsByDate[dateKey] || 0;
@@ -319,12 +367,8 @@ function calculateStreaks(calendarMap, pushCountsByDate, todayKey) {
     return push;
   };
 
-  // Generate sorted list of all date keys present in calendarMap (up to today)
-  // We iterate backwards from today up to 365 days to find current streak
   let currentStreak = 0;
   const todayDate = new Date();
-
-  // Check if today already has commits; if not, start streak check from yesterday
   const todayHasCommit = getCount(todayKey) > 0;
 
   for (let i = todayHasCommit ? 0 : 1; i <= 365; i++) {
@@ -338,7 +382,6 @@ function calculateStreaks(calendarMap, pushCountsByDate, todayKey) {
     }
   }
 
-  // Best streak: scan all dates in calendarMap chronologically
   const allDates = Object.keys(calendarMap).sort();
   let bestStreak = 0;
   let runningBest = 0;
@@ -348,7 +391,6 @@ function calculateStreaks(calendarMap, pushCountsByDate, todayKey) {
     const count = getCount(dk);
     if (count > 0) {
       if (prevDate) {
-        // Check if consecutive day
         const prev = new Date(prevDate);
         const curr = new Date(dk);
         const diffDays = Math.round((curr - prev) / (1000 * 60 * 60 * 24));
@@ -368,9 +410,6 @@ function calculateStreaks(calendarMap, pushCountsByDate, todayKey) {
     }
   }
 
-  // Also factor today into best streak in case calendarMap doesn't include today yet
   bestStreak = Math.max(bestStreak, currentStreak);
-
   return { currentStreak, bestStreak };
 }
-
