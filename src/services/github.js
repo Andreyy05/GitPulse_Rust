@@ -312,6 +312,9 @@ export async function fetchGitHubActivity(username, optionalToken = '') {
     // 7. Calculate current streak & best streak from the full-year calendar data
     const { currentStreak, bestStreak } = calculateStreaks(calendarMap, pushCountsByDate, todayKey);
 
+    // 8. Extended statistics (30d, 90d, average, best day of week, most active repo)
+    const stats = calculateExtendedStats(calendarMap, pushCountsByDate, pushEvents);
+
     // Sort pushes newest first
     recentPushes.sort((a, b) => b.timestamp - a.timestamp);
     const lastPush = recentPushes.length > 0 ? recentPushes[0] : null;
@@ -328,6 +331,7 @@ export async function fetchGitHubActivity(username, optionalToken = '') {
       total14DaysCommits: totalCommits,
       currentStreak,
       bestStreak,
+      stats,
       isOffline: false,
       offlineReason: null,
       rateLimitWarning,
@@ -412,4 +416,113 @@ function calculateStreaks(calendarMap, pushCountsByDate, todayKey) {
 
   bestStreak = Math.max(bestStreak, currentStreak);
   return { currentStreak, bestStreak };
+}
+
+/**
+ * Calculate extended statistics: 30d/90d commits, average, most active day of week, most active repo
+ */
+function calculateExtendedStats(calendarMap, pushCountsByDate, pushEvents) {
+  const getCount = (dateKey) => {
+    const cal = calendarMap[dateKey];
+    const push = pushCountsByDate[dateKey] || 0;
+    if (cal && cal.count !== undefined) return Math.max(cal.count, push);
+    return push;
+  };
+
+  const today = new Date();
+  let commits30Days = 0;
+  let commits90Days = 0;
+
+  for (let i = 0; i < 90; i++) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const dk = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const count = getCount(dk);
+    if (i < 30) {
+      commits30Days += count;
+    }
+    commits90Days += count;
+  }
+
+  const dailyAverage = (commits30Days / 30).toFixed(1);
+  const dailyAverage90 = (commits90Days / 90).toFixed(1);
+
+  // Day of week distribution across all available calendar dates
+  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const dayFullNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const daySums = [0, 0, 0, 0, 0, 0, 0];
+
+  const allDates = Object.keys(calendarMap);
+  for (const dk of allDates) {
+    const count = getCount(dk);
+    if (count > 0) {
+      const [y, m, d] = dk.split('-').map(Number);
+      const dateObj = new Date(y, m - 1, d);
+      const dayIdx = dateObj.getDay();
+      daySums[dayIdx] += count;
+    }
+  }
+
+  let maxDayIdx = 1; // default Monday
+  let maxDayCount = -1;
+  let totalAllDays = 0;
+  for (let i = 0; i < 7; i++) {
+    totalAllDays += daySums[i];
+    if (daySums[i] > maxDayCount) {
+      maxDayCount = daySums[i];
+      maxDayIdx = i;
+    }
+  }
+
+  const mostActiveDay = {
+    name: dayFullNames[maxDayIdx],
+    short: dayNames[maxDayIdx],
+    count: Math.max(0, maxDayCount),
+    percentage: totalAllDays > 0 ? Math.round((maxDayCount / totalAllDays) * 100) : 0,
+  };
+
+  // Reorder starting Monday: Mon, Tue, Wed, Thu, Fri, Sat, Sun
+  const displayOrder = [1, 2, 3, 4, 5, 6, 0];
+  const maxInOrder = Math.max(1, ...daySums);
+  const dayDistribution = displayOrder.map((idx) => ({
+    name: dayNames[idx],
+    fullName: dayFullNames[idx],
+    count: daySums[idx],
+    percentOfMax: Math.round((daySums[idx] / maxInOrder) * 100),
+    isMax: idx === maxDayIdx,
+  }));
+
+  // Most active repo from PushEvents
+  const repoMap = {};
+  for (const event of pushEvents) {
+    const rName = event.repo?.name;
+    if (!rName) continue;
+    const commitCount = Array.isArray(event.payload?.commits) && event.payload.commits.length > 0
+      ? event.payload.commits.length
+      : (event.payload?.size || 1);
+
+    if (!repoMap[rName]) {
+      repoMap[rName] = {
+        name: rName,
+        commits: 0,
+        pushes: 0,
+        url: `https://github.com/${rName}`,
+      };
+    }
+    repoMap[rName].commits += commitCount;
+    repoMap[rName].pushes += 1;
+  }
+
+  const sortedRepos = Object.values(repoMap).sort((a, b) => b.commits - a.commits);
+  const mostActiveRepo = sortedRepos[0] || null;
+
+  return {
+    commits30Days,
+    commits90Days,
+    dailyAverage,
+    dailyAverage90,
+    mostActiveDay,
+    dayDistribution,
+    mostActiveRepo,
+  };
 }
