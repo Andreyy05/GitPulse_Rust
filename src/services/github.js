@@ -1,7 +1,7 @@
 /**
- * GitHub API service to fetch user activity, profile avatar, and determine daily commit streak status.
- * Combines the official GitHub contribution calendar (real contribution graph) with PushEvents.
- * Includes local storage snapshot caching and offline fallback.
+ * GitHub API service to fetch user activity, profile avatar, contribution calendar,
+ * extended statistics (30/90 days, active day of week, daily average, top repo),
+ * user repositories (quicklinks/pinned), and offline local cache.
  */
 import { invoke } from '@tauri-apps/api/core';
 
@@ -100,6 +100,46 @@ async function fetchContributionsCalendar(username) {
   return daysMap;
 }
 
+/**
+ * Fetch recent repositories for quicklinks
+ */
+async function fetchUserRepositories(cleanUser, token, headers) {
+  try {
+    const endpoint = token
+      ? 'https://api.github.com/user/repos?sort=pushed&per_page=10'
+      : `https://api.github.com/users/${encodeURIComponent(cleanUser)}/repos?sort=pushed&per_page=10`;
+
+    let res = await fetch(endpoint, { headers });
+    if (!res.ok && token) {
+      res = await fetch(`https://api.github.com/users/${encodeURIComponent(cleanUser)}/repos?sort=pushed&per_page=10`, { headers });
+    }
+
+    if (res.ok) {
+      const parsed = await res.json();
+      if (Array.isArray(parsed)) {
+        return parsed.map((r) => ({
+          id: r.id,
+          name: r.name,
+          fullName: r.full_name,
+          url: r.html_url,
+          description: r.description || '',
+          language: r.language || 'Code',
+          stars: r.stargazers_count || 0,
+          forks: r.forks_count || 0,
+          isPrivate: !!r.private,
+          updatedAt: r.pushed_at || r.updated_at,
+        }));
+      }
+    }
+  } catch (err) {
+    console.warn('[GitPulse] Repositories fetch warning:', err);
+  }
+  return [];
+}
+
+/**
+ * Main fetch function with offline cache resilience
+ */
 export async function fetchGitHubActivity(username, optionalToken = '') {
   if (!username || !username.trim()) {
     throw new Error('Please configure your GitHub username.');
@@ -167,7 +207,7 @@ export async function fetchGitHubActivity(username, optionalToken = '') {
       return false;
     };
 
-    // 1. Fetch user profile to get exact avatar_url and check user existence
+    // 1. Fetch user profile
     try {
       const profileRes = await fetch(
         `https://api.github.com/users/${encodeURIComponent(cleanUser)}`,
@@ -179,7 +219,7 @@ export async function fetchGitHubActivity(username, optionalToken = '') {
       }
 
       if (checkRateLimit(profileRes)) {
-        // If profile is rate limited, rateLimitWarning is recorded
+        // Handled in helper
       } else if (profileRes.ok) {
         const profile = await profileRes.json();
         if (profile?.avatar_url) {
@@ -193,51 +233,45 @@ export async function fetchGitHubActivity(username, optionalToken = '') {
       console.warn('[GitPulse] User profile fetch warning:', err);
     }
 
-    // 2. Concurrently fetch official contributions calendar & Events API
-    let calendarMap = {};
-    try {
-      calendarMap = await fetchContributionsCalendar(cleanUser);
-    } catch (err) {
-      console.warn('[GitPulse] Error in fetchContributionsCalendar:', err);
-    }
+    // 2. Fetch contributions calendar, events, and repositories concurrently
+    const [calendarMap, rawEventsList, repositories] = await Promise.all([
+      fetchContributionsCalendar(cleanUser).catch(() => ({})),
+      (async () => {
+        const endpoint = token
+          ? 'https://api.github.com/user/events?per_page=100'
+          : `https://api.github.com/users/${encodeURIComponent(cleanUser)}/events?per_page=100`;
 
-    // 3. Query GitHub Events API with ?per_page=100
-    const endpoint = token
-      ? 'https://api.github.com/user/events?per_page=100'
-      : `https://api.github.com/users/${encodeURIComponent(cleanUser)}/events?per_page=100`;
+        let eventsRes = null;
+        try {
+          eventsRes = await fetch(endpoint, { headers });
+          if (!eventsRes.ok && token && endpoint.includes('/user/events')) {
+            eventsRes = await fetch(
+              `https://api.github.com/users/${encodeURIComponent(cleanUser)}/events?per_page=100`,
+              { headers }
+            );
+          }
+        } catch (err) {
+          console.warn('[GitPulse] Events fetch error:', err);
+        }
 
-    let eventsRes = null;
-    try {
-      eventsRes = await fetch(endpoint, { headers });
-
-      // Fallback to /users/{username}/events if /user/events fails
-      if (!eventsRes.ok && token && endpoint.includes('/user/events')) {
-        eventsRes = await fetch(
-          `https://api.github.com/users/${encodeURIComponent(cleanUser)}/events?per_page=100`,
-          { headers }
-        );
-      }
-    } catch (err) {
-      console.warn('[GitPulse] Events fetch error:', err);
-    }
-
-    let rawEventsList = [];
-    if (eventsRes && eventsRes.ok) {
-      const parsed = await eventsRes.json();
-      rawEventsList = Array.isArray(parsed) ? parsed : [];
-    } else if (eventsRes) {
-      checkRateLimit(eventsRes);
-    }
+        if (eventsRes && eventsRes.ok) {
+          const parsed = await eventsRes.json();
+          return Array.isArray(parsed) ? parsed : [];
+        }
+        if (eventsRes) checkRateLimit(eventsRes);
+        return [];
+      })(),
+      fetchUserRepositories(cleanUser, token, headers),
+    ]);
 
     // Filter for PushEvents only
     const pushEvents = rawEventsList.filter((e) => e.type === 'PushEvent');
 
-    // If avatar was not fetched from profile, fallback to actor avatar from event
     if (rawEventsList[0]?.actor?.avatar_url && avatarUrl.includes('avatars.githubusercontent.com/' + cleanUser)) {
       avatarUrl = rawEventsList[0].actor.avatar_url;
     }
 
-    // 4. Parse push events for today's push list and supplementary counts
+    // 3. Parse push events for today and date breakdown
     const pushCountsByDate = {};
     const recentPushes = [];
     const todayKey = formatLocalDateKey(new Date());
@@ -257,7 +291,6 @@ export async function fetchGitHubActivity(username, optionalToken = '') {
         pushCountsByDate[eventDateKey] = (pushCountsByDate[eventDateKey] || 0) + size;
       }
 
-      // Recent pushes details for today
       if (eventDateKey === todayKey) {
         const eventDate = new Date(event.created_at);
         const repoName = event.repo?.name || 'unknown/repo';
@@ -278,7 +311,7 @@ export async function fetchGitHubActivity(username, optionalToken = '') {
       }
     }
 
-    // 5. Generate 14-day timeline (chronologically: index 0 is 13 days ago, index 13 is TODAY)
+    // 4. Generate 14-day timeline
     const days = [];
     for (let i = 13; i >= 0; i--) {
       const d = new Date();
@@ -305,17 +338,15 @@ export async function fetchGitHubActivity(username, optionalToken = '') {
       });
     }
 
-    // 6. Connect today's commit status
     const todayCommits = days[13]?.count || 0;
     const totalCommits = days.reduce((acc, curr) => acc + curr.count, 0);
 
-    // 7. Calculate current streak & best streak from the full-year calendar data
+    // 5. Streaks
     const { currentStreak, bestStreak } = calculateStreaks(calendarMap, pushCountsByDate, todayKey);
 
-    // 8. Extended statistics (30d, 90d, average, best day of week, most active repo)
+    // 6. Extended statistics (30d, 90d, average, best day of week, most active repo)
     const stats = calculateExtendedStats(calendarMap, pushCountsByDate, pushEvents);
 
-    // Sort pushes newest first
     recentPushes.sort((a, b) => b.timestamp - a.timestamp);
     const lastPush = recentPushes.length > 0 ? recentPushes[0] : null;
 
@@ -332,6 +363,7 @@ export async function fetchGitHubActivity(username, optionalToken = '') {
       currentStreak,
       bestStreak,
       stats,
+      repositories,
       isOffline: false,
       offlineReason: null,
       rateLimitWarning,
@@ -360,8 +392,7 @@ export async function fetchGitHubActivity(username, optionalToken = '') {
 }
 
 /**
- * Calculate current streak and best streak from the calendar map.
- * Uses the full year of calendarMap data, supplemented by pushCountsByDate for today.
+ * Calculate current streak and best streak from calendar map
  */
 function calculateStreaks(calendarMap, pushCountsByDate, todayKey) {
   const getCount = (dateKey) => {
