@@ -33,10 +33,15 @@ Engineered from the ground up to replace heavy Chromium runtimes with a native *
 ## ✨ Features
 
 - **Activity & Streak Tracking**: Live tracking of daily commits against midnight local time with dynamic countdown timers.
+- **🔥 Consecutive Streaks & Record**: Real-time streak tracking showing active consecutive days and your all-time best streak.
 - **14-Day Contribution Heatmap**: Visual contribution density matrix mirroring GitHub's official activity palette.
+- **📊 Extended Commit Insights**: Detailed statistics card with 30-day and 90-day volume, daily averages, and peak weekday rhythm breakdown.
+- **📌 Repositories & Quicklinks**: Instant access to your recent and active repositories with stars, language tags, and custom pinning.
+- **📡 Offline Mode & Local Cache**: Zero downtime with resilient local snapshot caching and seamless auto-reconnect synchronization.
+- **Commit Fuel Generator & Editor**: Instant Conventional Commit generation (`feat:`, `fix:`, `docs:`, `hotfix:`, etc.) with in-place editable message drafting and length validation.
+- **Segmented View Navigation**: Instant switching between `Pulse`, `Stats`, `Repos`, and `All` views with persistent tab preference.
 - **Native System Tray**: Lives in your macOS menu bar / Windows system notification area with instant access to status and actions.
 - **Global Accelerator**: Toggle instant window visibility system-wide with `Cmd + Shift + G` (macOS) or `Ctrl + Shift + G` (Windows).
-- **Commit Fuel Generator**: Instant, context-aware Conventional Commit generation (`feat:`, `fix:`, `refactor:`, `chore:`, `perf:`) and casual commit phrases copied directly to clipboard.
 - **PAT Rate-Limit Bypass**: Native HTTP client (`reqwest`) supporting GitHub Personal Access Tokens for private repo tracking and 5,000 req/hr quotas.
 - **Adaptive Dark / Light Themes**: Respects macOS and Windows system appearance or manual dark/light toggle.
 - **Desktop Alerts & Discord Webhooks**: Scheduled push notifications before midnight deadlines with optional Discord channel dispatch.
