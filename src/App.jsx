@@ -151,6 +151,16 @@ export function App() {
     return () => clearInterval(intervalId);
   }, [loadActivity, refreshInterval]);
 
+  // Auto-sync immediately when network connectivity is restored
+  useEffect(() => {
+    const handleOnline = () => {
+      loadActivity(true);
+    };
+
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
+  }, [loadActivity]);
+
   // Listen for refresh request from tray menu
   useEffect(() => {
     let unlisten = null;
