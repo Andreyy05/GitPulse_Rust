@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { RefreshCw, GitCommit, Clock, AlertTriangle, ExternalLink, Calendar, User } from 'lucide-react';
+import { RefreshCw, GitCommit, Clock, AlertTriangle, ExternalLink, Calendar, User, Flame } from 'lucide-react';
 import { openUrl } from '@tauri-apps/plugin-opener';
 
 export function StatusCard({ data, loading, error, onRefresh }) {
@@ -107,6 +107,47 @@ export function StatusCard({ data, loading, error, onRefresh }) {
           <span className="font-normal">Sync</span>
         </button>
       </div>
+
+      {/* Streak Badge Row */}
+      {data && (data.currentStreak > 0 || data.bestStreak > 0) && (
+        <div className="flex items-center justify-between px-0.5">
+          {/* Current Streak */}
+          <div
+            className={`inline-flex items-center space-x-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full text-xs sm:text-sm font-semibold tracking-tight border ${
+              data.currentStreak >= 7
+                ? 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-500/20'
+                : data.currentStreak >= 1
+                ? 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-500/10 dark:text-amber-300 dark:border-amber-500/20'
+                : 'bg-zinc-100 text-zinc-600 border-zinc-200 dark:bg-white/[0.04] dark:text-zinc-400 dark:border-white/[0.08]'
+            }`}
+          >
+            <Flame
+              size={12}
+              className={`sm:w-3.5 sm:h-3.5 ${
+                data.currentStreak >= 7
+                  ? 'text-emerald-600 dark:text-emerald-400'
+                  : data.currentStreak >= 1
+                  ? 'text-amber-600 dark:text-amber-400'
+                  : 'text-zinc-400 dark:text-zinc-500'
+              }`}
+            />
+            <span>
+              {data.currentStreak === 0
+                ? 'No active streak'
+                : data.currentStreak === 1
+                ? '1-day streak'
+                : `${data.currentStreak}-day streak`}
+            </span>
+          </div>
+
+          {/* Best Streak */}
+          {data.bestStreak > 0 && (
+            <span className="text-[11px] sm:text-xs text-zinc-500 dark:text-zinc-400 tracking-tight">
+              Best: <span className="font-semibold text-zinc-700 dark:text-zinc-300">{data.bestStreak}d</span>
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Rate Limit Warning Banner (if API quota throttled) */}
       {data?.rateLimitWarning && (
