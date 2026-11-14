@@ -154,7 +154,19 @@ export function CommitFuel() {
           </span>
         </div>
 
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-2.5">
+          {/* Character counter (Conventional Commit length indicator) */}
+          <span
+            className={`font-mono text-[10px] ${
+              (editedMessage || '').trim().length > 72
+                ? 'text-amber-600 dark:text-amber-400 font-semibold'
+                : 'text-zinc-400 dark:text-zinc-500'
+            }`}
+            title="Conventional Commit recommended subject line: max 72 characters"
+          >
+            {(editedMessage || '').trim().length}/72
+          </span>
+
           {isModified && (
             <button
               onClick={handleResetEdit}
