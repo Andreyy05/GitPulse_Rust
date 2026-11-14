@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import confetti from 'canvas-confetti';
 import { Header } from './components/Header';
 import { StatusCard } from './components/StatusCard';
+import { StatsCard } from './components/StatsCard';
+import { RepoQuicklinks } from './components/RepoQuicklinks';
 import { CommitFuel } from './components/CommitFuel';
 import { SettingsModal } from './components/SettingsModal';
 import { fetchGitHubActivity } from './services/github';
@@ -57,6 +59,15 @@ export function App() {
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem('gitpulse_theme') || 'dark';
   });
+
+  const [activeTab, setActiveTab] = useState(() => {
+    return localStorage.getItem('gitpulse_active_tab') || 'pulse';
+  });
+
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    localStorage.setItem('gitpulse_active_tab', tabId);
+  };
 
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [data, setData] = useState(null);
@@ -372,16 +383,57 @@ export function App() {
       />
 
       {/* Main Content Area - Scrollable & Dynamically Adaptive */}
-      <main className="flex-1 w-full p-3.5 sm:p-6 md:p-8 lg:p-10 overflow-y-auto overflow-x-hidden custom-scrollbar flex flex-col items-center justify-start lg:justify-center">
-        <div className="w-full max-w-xl md:max-w-2xl lg:max-w-3xl xl:max-w-4xl space-y-3.5 sm:space-y-5 md:space-y-6 my-auto">
-          <StatusCard
-            data={data}
-            loading={loading}
-            error={error}
-            onRefresh={() => loadActivity(true)}
-          />
+      <main className="flex-1 w-full p-3.5 sm:p-6 md:p-8 lg:p-10 overflow-y-auto overflow-x-hidden custom-scrollbar flex flex-col items-center justify-start">
+        <div className="w-full max-w-xl md:max-w-2xl lg:max-w-3xl xl:max-w-4xl space-y-3.5 sm:space-y-4">
+          {/* Segmented Navigation Tab Bar */}
+          <div className="w-full flex items-center justify-between bg-zinc-200/70 dark:bg-white/[0.04] p-1 rounded-xl sm:rounded-2xl border border-zinc-200/60 dark:border-white/[0.06] transition-colors">
+            {[
+              { id: 'pulse', label: 'Pulse' },
+              { id: 'stats', label: 'Stats' },
+              { id: 'repos', label: 'Repos' },
+              { id: 'all', label: 'All' },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => handleTabChange(tab.id)}
+                className={`flex-1 py-1 sm:py-1.5 text-center rounded-lg sm:rounded-xl text-xs sm:text-sm font-medium tracking-tight transition-all ${
+                  activeTab === tab.id
+                    ? 'bg-white text-zinc-900 shadow-xs dark:bg-white/10 dark:text-white dark:shadow-none'
+                    : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
 
-          <CommitFuel />
+          {/* Cards Display */}
+          {(activeTab === 'pulse' || activeTab === 'all') && (
+            <StatusCard
+              data={data}
+              loading={loading}
+              error={error}
+              onRefresh={() => loadActivity(true)}
+            />
+          )}
+
+          {(activeTab === 'stats' || activeTab === 'all') && (
+            <StatsCard
+              stats={data?.stats}
+              loading={loading}
+            />
+          )}
+
+          {(activeTab === 'repos' || activeTab === 'all') && (
+            <RepoQuicklinks
+              repositories={data?.repositories}
+              loading={loading}
+            />
+          )}
+
+          {(activeTab === 'pulse' || activeTab === 'all') && (
+            <CommitFuel />
+          )}
         </div>
       </main>
 
