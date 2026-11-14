@@ -281,6 +281,10 @@ export async function fetchGitHubActivity(username, optionalToken = '') {
   const todayCommits = days[13]?.count || 0;
   const totalCommits = days.reduce((acc, curr) => acc + curr.count, 0);
 
+  // 7. Calculate current streak & best streak from the full-year calendar data
+  //    calendarMap has all days with contributions for the past year
+  const { currentStreak, bestStreak } = calculateStreaks(calendarMap, pushCountsByDate, todayKey);
+
   // Sort pushes newest first
   recentPushes.sort((a, b) => b.timestamp - a.timestamp);
   const lastPush = recentPushes.length > 0 ? recentPushes[0] : null;
@@ -295,8 +299,78 @@ export async function fetchGitHubActivity(username, optionalToken = '') {
     recentPushes: recentPushes.slice(0, 3),
     history14Days: days,
     total14DaysCommits: totalCommits,
+    currentStreak,
+    bestStreak,
     rateLimitWarning,
     updatedAt: new Date(),
   };
+}
+
+/**
+ * Calculate current streak and best streak from the calendar map.
+ * Uses the full year of calendarMap data, supplemented by pushCountsByDate for today.
+ */
+function calculateStreaks(calendarMap, pushCountsByDate, todayKey) {
+  // Build a helper: get commit count for a date key
+  const getCount = (dateKey) => {
+    const cal = calendarMap[dateKey];
+    const push = pushCountsByDate[dateKey] || 0;
+    if (cal && cal.count !== undefined) return Math.max(cal.count, push);
+    return push;
+  };
+
+  // Generate sorted list of all date keys present in calendarMap (up to today)
+  // We iterate backwards from today up to 365 days to find current streak
+  let currentStreak = 0;
+  const todayDate = new Date();
+
+  // Check if today already has commits; if not, start streak check from yesterday
+  const todayHasCommit = getCount(todayKey) > 0;
+
+  for (let i = todayHasCommit ? 0 : 1; i <= 365; i++) {
+    const d = new Date(todayDate);
+    d.setDate(d.getDate() - i);
+    const dk = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    if (getCount(dk) > 0) {
+      currentStreak++;
+    } else {
+      break;
+    }
+  }
+
+  // Best streak: scan all dates in calendarMap chronologically
+  const allDates = Object.keys(calendarMap).sort();
+  let bestStreak = 0;
+  let runningBest = 0;
+  let prevDate = null;
+
+  for (const dk of allDates) {
+    const count = getCount(dk);
+    if (count > 0) {
+      if (prevDate) {
+        // Check if consecutive day
+        const prev = new Date(prevDate);
+        const curr = new Date(dk);
+        const diffDays = Math.round((curr - prev) / (1000 * 60 * 60 * 24));
+        if (diffDays === 1) {
+          runningBest++;
+        } else {
+          runningBest = 1;
+        }
+      } else {
+        runningBest = 1;
+      }
+      bestStreak = Math.max(bestStreak, runningBest);
+      prevDate = dk;
+    } else {
+      runningBest = 0;
+      prevDate = dk;
+    }
+  }
+
+  // Also factor today into best streak in case calendarMap doesn't include today yet
+  bestStreak = Math.max(bestStreak, currentStreak);
+
+  return { currentStreak, bestStreak };
 }
 
