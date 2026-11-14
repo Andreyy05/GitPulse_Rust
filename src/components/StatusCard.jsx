@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { RefreshCw, GitCommit, Clock, AlertTriangle, ExternalLink, Calendar, User, Flame } from 'lucide-react';
+import { RefreshCw, GitCommit, Clock, AlertTriangle, ExternalLink, Calendar, User, Flame, WifiOff } from 'lucide-react';
 import { openUrl } from '@tauri-apps/plugin-opener';
 
 export function StatusCard({ data, loading, error, onRefresh }) {
@@ -146,6 +146,25 @@ export function StatusCard({ data, loading, error, onRefresh }) {
               Best: <span className="font-semibold text-zinc-700 dark:text-zinc-300">{data.bestStreak}d</span>
             </span>
           )}
+        </div>
+      )}
+
+      {/* Offline Mode Banner */}
+      {data?.isOffline && (
+        <div className="px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl bg-sky-500/[0.08] border border-sky-500/20 text-sky-800 dark:text-sky-300 text-xs sm:text-sm flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <WifiOff size={13} className="sm:w-4 sm:h-4 text-sky-600 dark:text-sky-400 shrink-0" />
+            <span className="font-medium text-[11px] sm:text-xs">
+              Offline mode — Showing cached sync {data.updatedAt ? `(${new Date(data.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})` : ''}
+            </span>
+          </div>
+          <button
+            onClick={onRefresh}
+            disabled={loading}
+            className="text-[11px] font-semibold underline hover:no-underline text-sky-700 dark:text-sky-300 ml-2 shrink-0 disabled:opacity-50"
+          >
+            Retry
+          </button>
         </div>
       )}
 
