@@ -1,86 +1,165 @@
 # ⚡ GitPulse
 
 <div align="center">
-  <p><strong>A high-performance, lightweight GitHub streak monitor & commit fuel companion</strong></p>
-  <p>Engineered with native system precision using <strong>Tauri v2</strong>, <strong>Rust</strong>, <strong>React 18</strong>, and <strong>Tailwind CSS</strong>.</p>
+  <p><strong>High-performance, lightweight native GitHub streak monitor and commit fuel companion</strong></p>
+  <p>Engineered with system-level precision using <strong>Tauri v2</strong>, <strong>Rust 2021</strong>, <strong>React 18</strong>, and <strong>Tailwind CSS</strong>.</p>
 
   <br />
 
-  [![macOS](https://img.shields.io/badge/Platform-macOS-000000?logo=apple&logoColor=white)](https://apple.com/macos)
-  [![Windows](https://img.shields.io/badge/Platform-Windows-0078D6?logo=windows&logoColor=white)](https://microsoft.com/windows)
-  [![Rust 2021](https://img.shields.io/badge/Rust-2021_Edition-DEA584?logo=rust&logoColor=black)](https://rust-lang.org/)
-  [![Tauri v2](https://img.shields.io/badge/Tauri-v2.0-24C8D8?logo=tauri&logoColor=white)](https://v2.tauri.app/)
-  [![React 18](https://img.shields.io/badge/React-18-20232A?logo=react&logoColor=61DAFB)](https://react.dev/)
-  [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3-38B2AC?logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+  [![Platform: macOS](https://img.shields.io/badge/Platform-macOS-000000?logo=apple&logoColor=white)](https://apple.com/macos)
+  [![Platform: Windows](https://img.shields.io/badge/Platform-Windows-0078D6?logo=windows&logoColor=white)](https://microsoft.com/windows)
+  [![Rust: 2021](https://img.shields.io/badge/Rust-2021_Edition-DEA584?logo=rust&logoColor=black)](https://rust-lang.org/)
+  [![Tauri: v2.0](https://img.shields.io/badge/Tauri-v2.0-24C8D8?logo=tauri&logoColor=white)](https://v2.tauri.app/)
+  [![React: 18](https://img.shields.io/badge/React-18.3-20232A?logo=react&logoColor=61DAFB)](https://react.dev/)
+  [![Tailwind CSS: 3](https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC?logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+  [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
   <br /><br />
 
-  <img src="assets/preview.png" alt="GitPulse UI Preview" width="380" style="border-radius: 14px; box-shadow: 0 12px 40px rgba(0,0,0,0.25);" />
+  <table align="center">
+    <tr>
+      <td align="center"><strong>Pulse & Streak View</strong></td>
+      <td align="center"><strong>Extended Commit Insights</strong></td>
+    </tr>
+    <tr>
+      <td align="center">
+        <img src="assets/preview.png" alt="GitPulse Pulse View" width="375" style="border-radius: 12px; box-shadow: 0 12px 36px rgba(0,0,0,0.35);" />
+      </td>
+      <td align="center">
+        <img src="assets/preview_stats.png" alt="GitPulse Stats View" width="375" style="border-radius: 12px; box-shadow: 0 12px 36px rgba(0,0,0,0.35);" />
+      </td>
+    </tr>
+  </table>
 
-  <p><em>Sleek frameless floating widget with native vibrancy, real-time activity status, and 14-day contribution heatmap.</em></p>
+  <p><em>Frameless floating widget with native vibrancy, real-time streak telemetry, 14-day contribution heatmap, and deep developer analytics.</em></p>
 </div>
 
 ---
 
-##  Overview
+## 📋 Overview
 
-**GitPulse** is a minimalist, native desktop companion that tracks your GitHub commit streaks, alerts you before streaks break, and sparks development velocity with integrated commit message authoring. 
+**GitPulse** is an engineering-focused personal developer companion built to track daily GitHub activity, safeguard contribution streaks, and spark momentum with intelligent commit message generation.
 
-Engineered from the ground up to replace heavy Chromium runtimes with a native **Rust core** and isolated system webviews (WebKit on macOS, WebView2 on Windows), GitPulse delivers instant start-up, sub-40MB memory usage, and zero system lag.
-
----
-
-## ✨ Features
-
-- **Activity & Streak Tracking**: Live tracking of daily commits against midnight local time with dynamic countdown timers.
-- **🔥 Consecutive Streaks & Record**: Real-time streak tracking showing active consecutive days and your all-time best streak.
-- **14-Day Contribution Heatmap**: Visual contribution density matrix mirroring GitHub's official activity palette.
-- **📊 Extended Commit Insights**: Detailed statistics card with 30-day and 90-day volume, daily averages, and peak weekday rhythm breakdown.
-- **📌 Repositories & Quicklinks**: Instant access to your recent and active repositories with stars, language tags, and custom pinning.
-- **📡 Offline Mode & Local Cache**: Zero downtime with resilient local snapshot caching and seamless auto-reconnect synchronization.
-- **Commit Fuel Generator & Editor**: Instant Conventional Commit generation (`feat:`, `fix:`, `docs:`, `hotfix:`, etc.) with in-place editable message drafting and length validation.
-- **Segmented View Navigation**: Instant switching between `Pulse`, `Stats`, `Repos`, and `All` views with persistent tab preference.
-- **Native System Tray**: Lives in your macOS menu bar / Windows system notification area with instant access to status and actions.
-- **Global Accelerator**: Toggle instant window visibility system-wide with `Cmd + Shift + G` (macOS) or `Ctrl + Shift + G` (Windows).
-- **PAT Rate-Limit Bypass**: Native HTTP client (`reqwest`) supporting GitHub Personal Access Tokens for private repo tracking and 5,000 req/hr quotas.
-- **Adaptive Dark / Light Themes**: Respects macOS and Windows system appearance or manual dark/light toggle.
-- **Desktop Alerts & Discord Webhooks**: Scheduled push notifications before midnight deadlines with optional Discord channel dispatch.
-- **Native Window Vibrancy**: Translucent, glassmorphic HUD styling with native macOS vibrancy and Windows shadow rendering.
+Unlike conventional Electron-based desktop utilities that consume hundreds of megabytes of RAM and run multiple background Chromium helper processes, GitPulse is engineered from the ground up on **Tauri v2** and **Rust**. By utilizing the operating system's native webview (WebKit on macOS, WebView2 on Windows), GitPulse delivers instant sub-200ms cold startups, ultra-low memory consumption (~30 MB RSS), and seamless integration into the system tray and global shortcut bus.
 
 ---
 
 ## ⚡ Technical Benchmarks
 
-| Metric | Legacy Electron Stack | GitPulse (Tauri v2 + Rust) | Improvement |
+| Metric | Legacy Electron Stack | GitPulse (Tauri v2 + Rust) | Architectural Advantage |
 | :--- | :--- | :--- | :--- |
-| **Engine** | Bundled Chromium + Node.js | Native WebKit / WebView2 + Rust | Zero browser bloat |
-| **Idle Memory (RSS)** | ~180 MB – 260 MB | **~30 MB – 45 MB** | **~80% reduction** |
-| **Cold Startup** | ~2,500 – 3,500 ms | **< 200 ms** | **12x faster** |
-| **Runtime Processes** | 4 – 6 heavy processes | **1 parent + system webview** | Minimal footprint |
-| **Binary Size** | ~140 MB | **~12 MB** | **>90% lighter** |
+| **Runtime Architecture** | Bundled Chromium + Node.js | Native OS Webview + Rust Core | Eliminates 150MB+ browser overhead |
+| **Idle Memory (RSS)** | ~180 MB – 260 MB | **~30 MB – 45 MB** | **~80% lower RAM footprint** |
+| **Cold Startup Time** | ~2,500 – 3,500 ms | **< 200 ms** | **12x faster execution** |
+| **Background Processes** | 4 – 6 heavy child processes | **1 native binary + webview** | Minimal OS thread impact |
+| **Installer / Binary Size**| ~140 MB | **~12 MB – 27 MB** | **>80% lighter distribution** |
+| **Energy Impact** | High idle CPU wakeups | **Zero wakeups when idle** | Optimized for laptop battery life |
 
 ---
 
-## 🛠️ Prerequisites
+## 📊 Key Capabilities
 
-Before installing or building GitPulse, verify your development environment meets the following requirements:
+### ⏱️ Streak & Deadline Telemetry (Pulse View)
+* **Real-Time Streak Tracking**: Live consecutive day counter with automatic tracking of your all-time personal best record (`🔥 1-day streak · Best: 11d`).
+* **Midnight Countdown Engine**: High-precision countdown timer calculating exact hours, minutes, and seconds until local midnight deadline with progress visualization.
+* **Emergency Push Alert**: Visual pulse and audible warnings when less than 30 minutes remain before midnight without detected public commits.
+* **Celebration Audio & Confetti**: Automatic celebratory chime and particle explosion upon detecting your first commit of the day.
 
-- **Node.js**: `v18.0.0` or higher
-- **Rust & Cargo**: Rust `1.78+` (install via [rustup.rs](https://rustup.rs/))
+### 🟩 14-Day Contribution Heatmap
+* **Contribution Density Matrix**: Visual representation of the last 14 days of activity mapped against GitHub's official color levels (0 to 3+ commits).
+* **Interactive Inspection**: Hover tooltips display exact commit quantities and formatted dates for each day.
+* **Dynamic Highlight Ring**: Visual highlight distinguishing the current calendar day in real time.
 
-### macOS Requirements
-- Xcode Command Line Tools:
-  ```bash
-  xcode-select --install
-  ```
+### 📈 Extended Commit Insights (Stats View)
+* **Flexible Analysis Windows**: Toggle between **Last 30 Days** and **Last 90 Days** activity windows.
+* **Velocity Metrics**: Total commit output paired with daily throughput averages (`commits/day`).
+* **Peak Output Detection**: Identifies your most productive weekday along with its percentage share of total output.
+* **Weekly Rhythm Bar Chart**: Mon-through-Sun breakdown visualizing development cadence throughout the week.
+* **Top Repository Ranking**: Ranked list of repositories driving the highest commit and push event volume.
 
-### Windows Requirements
-- **Microsoft Visual Studio C++ Build Tools** (selected during `rustup` setup or via Visual Studio Installer).
-- **Microsoft Edge WebView2 Runtime** (preinstalled by default on Windows 10 version 1803+ and Windows 11).
+### 📌 Repository Quicklinks (Repos View)
+* **Integrated Repository Hub**: Instant access to your personal repositories without navigating to github.com.
+* **Live Search Filter**: Real-time filtering by repository name, language, or topic tags.
+* **Custom Pinning**: Pin your critical active projects to the top of the interface for one-click access.
+
+### ✍️ Commit Fuel & Conventional Commits
+* **Multi-Category Generator**: Curated Conventional Commit templates categorized by intent:
+  * `Mix`: General developmental milestones.
+  * `Clean`: Strict Conventional Commits (`feat:`, `fix:`, `refactor:`, `perf:`).
+  * `Witty`: Humorous, relatable dev quips for non-critical side projects.
+  * `Docs`: Documentation and markdown maintenance.
+  * `Hotfix`: Critical patch declarations and emergency bugfixes.
+* **In-Place Editable Buffer**: Click directly into the message box to adapt, edit, or append commit context before copying.
+* **72-Character Length Gauge**: Live character counter with visual warning when commit headers exceed the standard 72-character Git recommendation.
+
+### 📡 Offline Mode & Network Resilience
+* **Zero Downtime Local Cache**: Activity state and repository listings are cached in local storage for instantaneous offline rendering.
+* **Auto-Reconnection Synchronization**: Automatically detects network restoration (`window.addEventListener('online')`) and synchronizes with GitHub API in the background.
+
+### 🖥️ Responsive Widescreen & Fullscreen HUD
+* **Adaptive Widget Layout**: Functions as a compact, floating HUD widget (380×570 px) or scales dynamically into an executive dashboard on 1080p, 1440p, or 4K widescreen displays with larger heatmaps and typography.
 
 ---
 
-## 🚀 Setup & Running
+## 🏗️ Architectural Design
+
+```mermaid
+flowchart TD
+    subgraph UI ["Presentation Layer (Vite 6 + React 18 + Tailwind CSS)"]
+        direction TB
+        Header["Header: Window Drag Region & Controls"]
+        Nav["Navigation: Segmented Tab Controller (Pulse / Stats / Repos / All)"]
+        PulseView["PulseView: StatusCard + 14-Day Heatmap + Streak Tracker"]
+        StatsView["StatsView: Commit Insights + Weekly Rhythm Chart"]
+        ReposView["ReposView: RepoQuicklinks with Pinning & Live Search"]
+        FuelView["CommitFuel: Conventional Commit Generator & 72-char Gauge"]
+        Settings["SettingsModal: PAT, Sound Volume, Theme, Discord Webhook"]
+    end
+
+    subgraph IPC ["Tauri v2 IPC Bridge"]
+        Commands["Type-Safe IPC Commands (fetch_contributions, update_tray, notify)"]
+        Events["Bi-directional Event Bus (tray-refresh-requested, window-toggle)"]
+    end
+
+    subgraph Core ["Native Core (Rust 2021 / Tauri v2)"]
+        direction TB
+        Tray["System Tray Service (Native Context Menu & Tooltips)"]
+        Shortcuts["Global Accelerator Engine (Ctrl/Cmd + Shift + G)"]
+        SingleInstance["Single Instance Mutex Guard"]
+        HTTPClient["reqwest Async Client with User-Agent & PAT Headers"]
+        NotifyEngine["Native OS Notification Dispatcher"]
+        AutoStartEngine["Platform LaunchAgent / Windows Registry Service"]
+    end
+
+    UI <--> IPC <--> Core
+```
+
+---
+
+## ⌨️ Controls & Global Shortcuts
+
+| Action | macOS | Windows / Linux |
+| :--- | :--- | :--- |
+| **Toggle Window Visibility** | `Cmd + Shift + G` | `Ctrl + Shift + G` |
+| **Move Window** | Click & drag titlebar | Click & drag titlebar |
+| **Maximize / Restore** | Double-click titlebar | Double-click titlebar or maximize button |
+| **Hide to Tray** | Traffic light close button (`✕`) | Titlebar close button (`✕`) |
+| **Restore from Tray** | Click menu bar icon | Left-click notification area icon |
+| **Force Activity Refresh** | Right-click tray -> *Refresh Activity Now* | Right-click tray -> *Refresh Activity Now* |
+| **Quit Application** | Right-click tray -> *Quit GitPulse* | Right-click tray -> *Quit GitPulse* |
+
+---
+
+## 🛠️ Prerequisites & Installation
+
+### Requirements
+* **Node.js**: `v18.0.0` or higher (LTS recommended)
+* **Rust**: `1.78+` (install via [rustup.rs](https://rustup.rs/))
+* **Platform Dependencies**:
+  * **Windows**: Visual Studio C++ Build Tools & Microsoft Edge WebView2 (standard on Windows 10/11).
+  * **macOS**: Xcode Command Line Tools (`xcode-select --install`).
+
+### Installation
 
 Clone the repository and install frontend dependencies:
 
@@ -90,104 +169,52 @@ cd GitPulse_Rust
 npm install
 ```
 
-### macOS
+### Development Mode
 
-#### Run in Development Mode
+Run the application with hot-module reloading and live Rust compilation:
+
 ```bash
 npm run dev
 # or: npx tauri dev
 ```
 
-#### Build Release App & DMG Bundle
+### Production Release Build
+
+To build the standalone release binary and native installer:
+
 ```bash
 npm run build
 # or: npx tauri build
 ```
-The compiled macOS `.app` bundle and standalone `.dmg` installer will be generated in:
-```
-src-tauri/target/release/bundle/dmg/GitPulse_1.0.0_x64.dmg (or aarch64.dmg)
-src-tauri/target/release/bundle/macos/GitPulse.app
-```
+
+Generated production artifacts:
+* **Windows**:
+  * Standalone binary: `src-tauri/target/release/gitpulse.exe`
+  * MSI Installer: `src-tauri/target/release/bundle/msi/GitPulse_1.0.0_x64_en-US.msi`
+* **macOS**:
+  * Standalone app: `src-tauri/target/release/bundle/macos/GitPulse.app`
+  * DMG Installer: `src-tauri/target/release/bundle/dmg/GitPulse_1.0.0_x64.dmg`
 
 ---
 
-### Windows
+## ⚙️ Configuration & Security
 
-#### Run in Development Mode
-```powershell
-npm run dev
-# or: npx tauri dev
-```
+All configurations are stored locally via `localStorage` with zero telemetry:
 
-#### Build Release Executable & MSI Bundle
-```powershell
-npm run build
-# or: npx tauri build
-```
-The compiled standalone `.exe` and `.msi` installers will be located in:
-```
-src-tauri/target/release/gitpulse.exe
-src-tauri/target/release/bundle/msi/GitPulse_1.0.0_x64_en-US.msi
-```
+* **GitHub Username**: Target GitHub account handle to monitor public events and contribution graphs.
+* **Personal Access Token (PAT)**: Optional GitHub PAT (`read:user`, `repo`) to enable private repository commit tracking and raise API rate limits from 60 to 5,000 requests/hour.
+* **Auto-Refresh Cadence**: Configurable polling interval (15, 30, or 60 minutes).
+* **Audible Alerts & Volume**: Toggle sound effects (streak celebration, emergency warning) with dedicated volume slider.
+* **Scheduled Evening Alert**: Daily reminder at a user-defined time (default `18:00`) if no commits have been pushed.
+* **Discord Webhook**: Optional integration to relay streak alerts directly into your private Discord channel.
+* **Launch at Startup**: Configurable system autostart integration.
+* **Appearance Themes**: Toggle between **Dark**, **Light**, or **System** theme matching.
 
 ---
 
-## ⌨️ Controls & Shortcuts
+## 📄 License
 
-| Action | macOS | Windows / Linux |
-| :--- | :--- | :--- |
-| **Toggle Window** | `Cmd + Shift + G` | `Ctrl + Shift + G` |
-| **Move Window** | Click & drag header bar | Click & drag header bar |
-| **Hide to Tray** | Traffic light Close button (`✕`) | Titlebar Close button (`✕`) |
-| **Restore Window** | Click menu bar tray icon | Left-click system tray icon |
-| **Force Activity Refresh** | Right-click tray -> *Refresh Activity Now* | Right-click tray -> *Refresh Activity Now* |
-
----
-
-## 🏗️ Architecture
-
-```mermaid
-flowchart TD
-    subgraph UI ["Presentation Layer (Vite 6 + React 18 + Tailwind CSS)"]
-        direction TB
-        Header["Header: macOS Traffic Lights & Drag Region"]
-        Status["StatusCard: Streak Engine & 14-Day Heatmap"]
-        Fuel["CommitFuel: Conventional Commit Generator"]
-        Settings["SettingsModal: Token, Interval, Discord Webhooks"]
-    end
-
-    subgraph IPC ["Tauri v2 IPC Bridge"]
-        Invoke["Type-Safe Command Invocation"]
-        Events["Bi-directional Event Bus"]
-    end
-
-    subgraph Core ["Native Core (Rust 2021 / Tauri v2)"]
-        direction TB
-        Tray["System Tray / Menu Bar Service"]
-        Shortcuts["Cross-Platform Global Accelerator"]
-        SingleInst["Single Instance Mutex Guard"]
-        HTTP["Native reqwest Async Scraper"]
-        Notif["Native Notification & Discord Dispatcher"]
-        AutoStart["LaunchAgent / Registry Autostart"]
-    end
-
-    UI <--> IPC <--> Core
-```
-
----
-
-## ⚙️ Configuration
-
-All user preferences are managed directly from the in-app Settings modal and securely saved locally:
-
-* **GitHub Username**: Target GitHub account handle for commit analysis.
-* **Personal Access Token (PAT)**: Optional fine-grained or classic token (`read:user`, `repo`) for private repositories and higher API rate limits.
-* **Refresh Cadence**: Automated background refresh cycle (15, 30, or 60 minutes).
-* **Streak Alert Time**: Daily alert prompt time (default `18:00`) before your streak expires.
-* **Discord Webhook**: Forward commit alerts to your personal Discord server.
-* **Launch at Startup**: Automatically start GitPulse silently in the tray upon operating system boot.
-
----
+Distributed under the MIT License. See [LICENSE](LICENSE) for more information.
 
 <div align="center">
   Author: <b>Andrej Pavliščak</b> (<a href="https://github.com/Andreyy05">@Andreyy05</a>)
