@@ -54,6 +54,27 @@ export function RepoQuicklinks({ repositories = [], loading }) {
   };
 
   if (!repositories || repositories.length === 0) {
+    if (loading) {
+      return (
+        <div className="p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl bg-white dark:bg-white/[0.03] border border-zinc-200/80 dark:border-white/[0.08] shadow-sm shadow-zinc-950/5 dark:shadow-none flex flex-col space-y-3.5 animate-pulse">
+          <div className="flex items-center justify-between">
+            <div className="h-4 w-32 bg-zinc-200 dark:bg-white/[0.06] rounded" />
+            <div className="h-3 w-12 bg-zinc-200 dark:bg-white/[0.06] rounded" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-2.5">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="p-3 rounded-lg sm:rounded-xl border border-zinc-200/50 dark:border-white/[0.03] bg-zinc-50/50 dark:bg-white/[0.01] space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="h-3.5 w-32 bg-zinc-200 dark:bg-white/[0.06] rounded" />
+                  <div className="h-3 w-8 bg-zinc-200 dark:bg-white/[0.06] rounded" />
+                </div>
+                <div className="h-2.5 w-3/4 bg-zinc-200/70 dark:bg-white/[0.04] rounded" />
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
     return null;
   }
 
@@ -99,8 +120,8 @@ export function RepoQuicklinks({ repositories = [], loading }) {
         </div>
       )}
 
-      {/* Repos List */}
-      <div className="space-y-2 max-h-[280px] overflow-y-auto custom-scrollbar pr-0.5">
+      {/* Repos List - Responsive Grid, No Artificial Height Cap */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 sm:gap-2.5">
         {filteredRepos.map((repo) => {
           const isPinned = pinnedNames.includes(repo.name);
           const langColor = LANGUAGE_COLORS[repo.language] || 'bg-zinc-400';
@@ -109,7 +130,7 @@ export function RepoQuicklinks({ repositories = [], loading }) {
             <div
               key={repo.id || repo.name}
               onClick={() => handleOpenRepo(repo.url)}
-              className={`p-2.5 sm:p-3 rounded-lg sm:rounded-xl border transition-all cursor-pointer group flex flex-col space-y-1.5 ${
+              className={`p-2.5 sm:p-3 rounded-lg sm:rounded-xl border transition-all cursor-pointer group flex flex-col justify-between space-y-1.5 ${
                 isPinned
                   ? 'bg-amber-500/[0.04] border-amber-500/30 dark:bg-amber-500/[0.03] dark:border-amber-500/20'
                   : 'bg-zinc-50 dark:bg-white/[0.02] border-zinc-200/70 dark:border-white/[0.06] hover:bg-zinc-100/60 dark:hover:bg-white/[0.04] hover:border-zinc-300 dark:hover:border-white/[0.1]'
