@@ -106,12 +106,12 @@ async function fetchContributionsCalendar(username) {
 async function fetchUserRepositories(cleanUser, token, headers) {
   try {
     const endpoint = token
-      ? 'https://api.github.com/user/repos?sort=pushed&per_page=10'
-      : `https://api.github.com/users/${encodeURIComponent(cleanUser)}/repos?sort=pushed&per_page=10`;
+      ? 'https://api.github.com/user/repos?sort=pushed&per_page=12'
+      : `https://api.github.com/users/${encodeURIComponent(cleanUser)}/repos?sort=pushed&per_page=12`;
 
     let res = await fetch(endpoint, { headers });
     if (!res.ok && token) {
-      res = await fetch(`https://api.github.com/users/${encodeURIComponent(cleanUser)}/repos?sort=pushed&per_page=10`, { headers });
+      res = await fetch(`https://api.github.com/users/${encodeURIComponent(cleanUser)}/repos?sort=pushed&per_page=12`, { headers });
     }
 
     if (res.ok) {
@@ -344,8 +344,8 @@ export async function fetchGitHubActivity(username, optionalToken = '') {
     // 5. Streaks
     const { currentStreak, bestStreak } = calculateStreaks(calendarMap, pushCountsByDate, todayKey);
 
-    // 6. Extended statistics (30d, 90d, average, best day of week, most active repo)
-    const stats = calculateExtendedStats(calendarMap, pushCountsByDate, pushEvents);
+    // 6. Extended statistics (30d, 90d, average, best day of week, most active repo, full year calendar)
+    const stats = calculateExtendedStats(calendarMap, pushCountsByDate, pushEvents, todayKey);
 
     recentPushes.sort((a, b) => b.timestamp - a.timestamp);
     const lastPush = recentPushes.length > 0 ? recentPushes[0] : null;
@@ -360,6 +360,8 @@ export async function fetchGitHubActivity(username, optionalToken = '') {
       recentPushes: recentPushes.slice(0, 3),
       history14Days: days,
       total14DaysCommits: totalCommits,
+      yearWeeks: stats.yearWeeks,
+      totalYearContributions: stats.totalYearContributions,
       currentStreak,
       bestStreak,
       stats,
@@ -450,9 +452,9 @@ function calculateStreaks(calendarMap, pushCountsByDate, todayKey) {
 }
 
 /**
- * Calculate extended statistics: 30d/90d commits, average, most active day of week, most active repo
+ * Calculate extended statistics: 30d/90d commits, average, most active day of week, most active repo, and 52-week calendar
  */
-function calculateExtendedStats(calendarMap, pushCountsByDate, pushEvents) {
+function calculateExtendedStats(calendarMap, pushCountsByDate, pushEvents, todayKey) {
   const getCount = (dateKey) => {
     const cal = calendarMap[dateKey];
     const push = pushCountsByDate[dateKey] || 0;
@@ -547,6 +549,64 @@ function calculateExtendedStats(calendarMap, pushCountsByDate, pushEvents) {
   const sortedRepos = Object.values(repoMap).sort((a, b) => b.commits - a.commits);
   const mostActiveRepo = sortedRepos[0] || null;
 
+  // Build 52-week full year calendar (Sunday through Saturday columns)
+  const currentDayOfWeek = today.getDay(); // 0 (Sun) to 6 (Sat)
+  const daysUntilSaturday = 6 - currentDayOfWeek;
+  const endDate = new Date(today);
+  endDate.setDate(today.getDate() + daysUntilSaturday);
+
+  const totalWeeks = 52;
+  const startDate = new Date(endDate);
+  startDate.setDate(endDate.getDate() - (totalWeeks * 7 - 1));
+
+  const yearWeeks = [];
+  let currentWeekDays = [];
+  let totalYearContributions = 0;
+  const monthAbbrs = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  let prevMonth = null;
+
+  const walker = new Date(startDate);
+  while (walker <= endDate) {
+    const dk = formatLocalDateKey(walker);
+    const count = getCount(dk);
+    const cal = calendarMap[dk];
+    const isFuture = walker > today;
+    const level = isFuture ? -1 : (cal && cal.level !== undefined ? cal.level : calculateHeatmapLevel(count));
+
+    if (!isFuture) {
+      totalYearContributions += count;
+    }
+
+    currentWeekDays.push({
+      date: dk,
+      count: isFuture ? 0 : count,
+      level: Math.min(Math.max(level, 0), 3),
+      isToday: dk === todayKey,
+      isFuture,
+      dayOfWeek: walker.getDay(),
+    });
+
+    if (currentWeekDays.length === 7) {
+      // Label month on the week containing the 1st of a new month
+      const firstDate = new Date(currentWeekDays[0].date);
+      const mIdx = firstDate.getMonth();
+      const mStr = monthAbbrs[mIdx];
+      let monthLabel = null;
+      if (mStr !== prevMonth) {
+        monthLabel = mStr;
+        prevMonth = mStr;
+      }
+
+      yearWeeks.push({
+        days: currentWeekDays,
+        monthLabel,
+      });
+      currentWeekDays = [];
+    }
+
+    walker.setDate(walker.getDate() + 1);
+  }
+
   return {
     commits30Days,
     commits90Days,
@@ -555,5 +615,7 @@ function calculateExtendedStats(calendarMap, pushCountsByDate, pushEvents) {
     mostActiveDay,
     dayDistribution,
     mostActiveRepo,
+    yearWeeks,
+    totalYearContributions,
   };
 }
