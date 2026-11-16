@@ -90,9 +90,20 @@ export function StatusCard({ data, loading, error, onRefresh }) {
               <span>@{data?.username || 'user'}</span>
               <ExternalLink size={10} className="sm:w-3 sm:h-3 text-zinc-400 dark:text-zinc-500" />
             </button>
-            <span className="text-[11px] sm:text-xs text-zinc-500 dark:text-zinc-400">
-              {data?.updatedAt ? `Synced ${data.updatedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : 'Not synced'}
-            </span>
+            <div className="flex items-center space-x-1.5">
+              <span className="text-[11px] sm:text-xs text-zinc-500 dark:text-zinc-400">
+                {data?.updatedAt ? `Synced ${data.updatedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : 'Not synced'}
+              </span>
+              {data?.isOffline && (
+                <span
+                  title={data?.offlineReason || 'Operating from offline cache'}
+                  className="inline-flex items-center space-x-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-amber-500/10 border border-amber-500/25 text-amber-700 dark:text-amber-400"
+                >
+                  <WifiOff size={9} />
+                  <span>Offline cache</span>
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
