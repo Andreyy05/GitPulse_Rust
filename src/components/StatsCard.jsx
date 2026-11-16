@@ -1,11 +1,30 @@
 import React, { useState } from 'react';
 import { BarChart3, TrendingUp, Calendar, GitFork, Award, ExternalLink, Zap } from 'lucide-react';
 import { openUrl } from '@tauri-apps/plugin-opener';
+import { YearHeatmap } from './YearHeatmap';
 
 export function StatsCard({ stats, loading }) {
   const [activeWindow, setActiveWindow] = useState('30'); // '30' or '90'
 
-  if (!stats) return null;
+  if (!stats) {
+    if (loading) {
+      return (
+        <div className="p-4 sm:p-5 md:p-6 rounded-xl sm:rounded-2xl bg-white dark:bg-white/[0.03] border border-zinc-200/80 dark:border-white/[0.08] shadow-sm shadow-zinc-950/5 dark:shadow-none flex flex-col space-y-4 animate-pulse">
+          <div className="flex items-center justify-between">
+            <div className="h-4 w-28 bg-zinc-200 dark:bg-white/[0.06] rounded" />
+            <div className="h-6 w-24 bg-zinc-200 dark:bg-white/[0.06] rounded-lg" />
+          </div>
+          <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
+            <div className="h-16 bg-zinc-100 dark:bg-white/[0.02] rounded-lg border border-zinc-200/50 dark:border-white/[0.03]" />
+            <div className="h-16 bg-zinc-100 dark:bg-white/[0.02] rounded-lg border border-zinc-200/50 dark:border-white/[0.03]" />
+          </div>
+          <div className="h-12 bg-zinc-100 dark:bg-white/[0.02] rounded-lg" />
+          <div className="h-20 bg-zinc-100 dark:bg-white/[0.02] rounded-lg" />
+        </div>
+      );
+    }
+    return null;
+  }
 
   const handleOpenRepo = async (url) => {
     if (!url) return;
@@ -173,6 +192,11 @@ export function StatsCard({ stats, loading }) {
           </div>
         </div>
       )}
+      {/* Full-Year Contribution Heatmap (365 days / 52 weeks) */}
+      <YearHeatmap
+        yearWeeks={stats.yearWeeks}
+        totalContributions={stats.totalYearContributions}
+      />
     </div>
   );
 }
