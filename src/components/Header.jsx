@@ -1,10 +1,10 @@
 import React, { useMemo } from 'react';
-import { Minus, Square, X, Settings as SettingsIcon, Activity } from 'lucide-react';
+import { Minus, Square, X, Settings as SettingsIcon, Activity, Sun, Moon } from 'lucide-react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 
 const appWindow = getCurrentWindow();
 
-export function Header({ status = 'default', onOpenSettings }) {
+export function Header({ status = 'default', onOpenSettings, theme = 'dark', onToggleTheme }) {
   const isMac = useMemo(() => {
     if (typeof navigator === 'undefined') return false;
     return (
@@ -97,8 +97,18 @@ export function Header({ status = 'default', onOpenSettings }) {
             <span className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${statusDot}`} data-tauri-drag-region />
           </div>
 
-          {/* macOS Right Action (Settings) */}
+          {/* macOS Right Action (Theme Toggle + Settings) */}
           <div className="flex items-center space-x-1" data-tauri-drag-region="false">
+            {onToggleTheme && (
+              <button
+                onClick={onToggleTheme}
+                title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                aria-label="Toggle Theme"
+                className="p-1 sm:p-1.5 rounded-md text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-zinc-200/60 dark:hover:bg-white/[0.06] transition-colors"
+              >
+                {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
+              </button>
+            )}
             <button
               onClick={onOpenSettings}
               title="Settings"
@@ -123,6 +133,16 @@ export function Header({ status = 'default', onOpenSettings }) {
 
           {/* Window Controls (Right-aligned on Windows/Linux) */}
           <div className="flex items-center space-x-0.5 sm:space-x-1" data-tauri-drag-region="false">
+            {onToggleTheme && (
+              <button
+                onClick={onToggleTheme}
+                title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                aria-label="Toggle Theme"
+                className="p-1 sm:p-1.5 rounded-md text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-zinc-200/60 dark:hover:bg-white/[0.06] transition-colors"
+              >
+                {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
+              </button>
+            )}
             <button
               onClick={onOpenSettings}
               title="Settings"
