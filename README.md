@@ -65,8 +65,9 @@ Unlike conventional Electron-based desktop utilities that consume hundreds of me
 * **Emergency Push Alert**: Visual pulse and audible warnings when less than 30 minutes remain before midnight without detected public commits.
 * **Celebration Audio & Confetti**: Automatic celebratory chime and particle explosion upon detecting your first commit of the day.
 
-### 🟩 14-Day Contribution Heatmap
-* **Contribution Density Matrix**: Visual representation of the last 14 days of activity mapped against GitHub's official color levels (0 to 3+ commits).
+### 🟩 14-Day & 52-Week Contribution Heatmaps
+* **14-Day Contribution Matrix**: Visual representation of the last 14 days of activity on the Pulse tab mapped against GitHub's official color levels (0 to 3+ commits).
+* **52-Week Full-Year Heatmap (Stats View)**: Comprehensive 52-column × 7-row yearly contribution matrix mirroring GitHub profiles, complete with month headers, sticky Mon/Wed/Fri labels, mouse-wheel horizontal panning, and automatic right-anchoring to current activity.
 * **Interactive Inspection**: Hover tooltips display exact commit quantities and formatted dates for each day.
 * **Dynamic Highlight Ring**: Visual highlight distinguishing the current calendar day in real time.
 
@@ -79,6 +80,7 @@ Unlike conventional Electron-based desktop utilities that consume hundreds of me
 
 ### 📌 Repository Quicklinks (Repos View)
 * **Integrated Repository Hub**: Instant access to your personal repositories without navigating to github.com.
+* **Responsive 2-Column Grid**: Automatically adapts to a 2-column layout on wide and maximized viewports without artificial height constraints or nested scrollbars.
 * **Live Search Filter**: Real-time filtering by repository name, language, or topic tags.
 * **Custom Pinning**: Pin your critical active projects to the top of the interface for one-click access.
 
@@ -94,10 +96,12 @@ Unlike conventional Electron-based desktop utilities that consume hundreds of me
 
 ### 📡 Offline Mode & Network Resilience
 * **Zero Downtime Local Cache**: Activity state and repository listings are cached in local storage for instantaneous offline rendering.
+* **Offline Status Badge**: Clear visual indicator in the user status bar notifying when running from cached snapshots.
 * **Auto-Reconnection Synchronization**: Automatically detects network restoration (`window.addEventListener('online')`) and synchronizes with GitHub API in the background.
 
 ### 🖥️ Responsive Widescreen & Fullscreen HUD
 * **Adaptive Widget Layout**: Functions as a compact, floating HUD widget (380×570 px) or scales dynamically into an executive dashboard on 1080p, 1440p, or 4K widescreen displays with larger heatmaps and typography.
+* **Instant Header Theme Toggle**: Quick 1-click toggle button directly in the window titlebar for immediate switching between dark and light modes.
 
 ---
 
